@@ -1,0 +1,28 @@
+\providecommand{\bysame}{\leavevmode\hbox to3em{\hrulefill}\thinspace}
+\providecommand{\MR}{\relax\ifhmode\unskip\space\fi MR }
+% \MRhref is called by the amsart/book/proc definition of \MR.
+\providecommand{\MRhref}[2]{%
+  \href{http://www.ams.org/mathscinet-getitem?mr=#1}{#2}
+}
+\providecommand{\href}[2]{#2}
+\begin{thebibliography}{Cas01}
+
+\bibitem[Cas01]{casella2001empirical}
+George Casella, \emph{Empirical bayes gibbs sampling}, Biostatistics \textbf{2}
+  (2001), no.~4, 485--500.
+
+\bibitem[Fu98]{fu1998penalized}
+Wenjiang~J Fu, \emph{Penalized regressions: the bridge versus the lasso},
+  Journal of computational and graphical statistics \textbf{7} (1998), no.~3,
+  397--416.
+
+\bibitem[PC08]{park2008bayesian}
+Trevor Park and George Casella, \emph{The bayesian lasso}, Journal of the
+  American Statistical Association \textbf{103} (2008), no.~482, 681--686.
+
+\bibitem[Tib96]{tibshirani1996regression}
+Robert Tibshirani, \emph{Regression shrinkage and selection via the lasso},
+  Journal of the Royal Statistical Society. Series B (Methodological) (1996),
+  267--288.
+
+\end{thebibliography}

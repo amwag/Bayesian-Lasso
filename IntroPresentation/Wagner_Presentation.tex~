@@ -1,0 +1,35 @@
+\documentclass{beamer} % "Beamer" is a word used in Germany to mean video projector. 
+
+\usetheme{Berkeley}
+\usepackage{color}
+\usepackage{graphicx}
+\theoremstyle{definition}
+\newtheorem*{dfn}{A Reasonable Definition}               
+\title{The Bayesian Lasso
+Trevor Park and George Casella}
+\author{Annelise Wagner}
+\institute{University of Washington Statistics}
+\date{April 4, 2016}
+\AtBeginSection[]
+{
+\begin{frame}
+\frametitle{Presentation Outline}
+\end{frame}
+}
+\begin{document}
+\begin{frame}
+\titlepage
+\end{frame}
+\section{What Can Happen at a Critical Point?}
+\begin{frame}
+\frametitle{The Usual Suspects}
+You might think that if $f'(0)=0$ (and $f$ is not a constant function) then at $x=0$, $f$ must have
+\begin{itemize}
+\pause\item Stuf
+\pause\item Stuff
+\end{itemize}
+\pause If that's what you think, then you are ... \pause (notice that we're giving you time to reconsider!) ... \pause wrong.
+\end{frame}
+
+
+\end{document}
