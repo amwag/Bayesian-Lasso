@@ -13,6 +13,12 @@
 
 \bibliographystyle{plainnat}
 
+\usepackage{color}
+\usepackage{ulem}
+\newcommand{\vmdel}[1]{\sout{#1}}
+\newcommand{\vmadd}[1]{\textbf{\color{red}{#1}}}
+\newcommand{\vmcomment}[1]{({\color{blue}{VM's comment:}} \textbf{\color{blue}{#1}})}
+
 \begin{document}
 %%\maketitle
 
@@ -30,6 +36,7 @@
 \end{abstract}
 
 \section{Introduction}
+\vmcomment{Your introduction looks more like beginning of the Methods section to me. Ideally, intro should introduce the problem without formulae. Need to motivate sparsity and give a literature review of sparse regression, explaining why it is useful and what people have done before Park and Casella paper.}
 Linear regression is a broad problem with a myriad of proposed techniques for solving. At its heart, linear regression assumes that we have some vector of responses, $\boldsymbol{y}$, which depend linearly on some covariates, $\boldsymbol{X}$. Formally, accounting for an error term, we wish to fit the model \[
 \boldsymbol{y} = \mu \boldsymbol{1}_n + \boldsymbol{X}\boldsymbol{\beta}+\boldsymbol{\epsilon}
 \] where $\boldsymbol{y}$ is an $n \times 1$ vector, $\mu$ is the mean of $\boldsymbol{y}$, $\boldsymbol{X}$ is a matrix of regressors (typically standardized), and $\boldsymbol{\epsilon}$ is a vector of indepedent and identically distributed zero mean normal variables with an unknown variance. For the sake of this discussion we will assume that the $\boldsymbol{y}$ has zero mean ($\mu=0$), noting that in practice this can be easily achieved by subtracting the sample mean estimate.
@@ -42,6 +49,7 @@ Penalized regression takes a similar approach, trying to minimize the square err
 \min_{\boldsymbol{\beta}}  \hspace{.1cm} (\boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta})^T(\boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta})+\lambda\sum_{j=1}^p|\beta_j|.
 \] In the Lasso original derivation it was noted that these estimates can be equivalently viewed as posterior modes of OLS estimates, when independent Laplace priors are placed on the $\boldsymbol{\beta}$s.\cite{tibshirani1996regression}
 
+<<<<<<< HEAD
 This idea can be expanded to other penalized regressions of the form  \[
 \min_{\boldsymbol{\beta}}  \hspace{.1cm} (\boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta})^T(\boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta})+\lambda\sum_{j=1}^p|\beta_j|^q
 \] for some $q\geq0$.\cite{park2008bayesian} These are collectively known as Bridge Regression, though $q=1$ (Lasso Regression) and $q=2$ (Ridge Regression) have appealing and better understood properties.
@@ -71,6 +79,10 @@ The Bayesian Lasso, in keeping with Tibshirani's original interpretation, places
 \] is placed on each distribution, which results in a unimodal posterior. Other prior distributions have been considred, but unimodality is key for Lasso estimates as non-unimodal posterior distributions cause convergence problems.
 
 In the paper by Park and Casella, they produce a heirarchical models along with a Gibbs sampling technique to sample from posterior distributions. Alongside this formulation they also present an approach to a data-driven estimation for $\lambda$ hyperparameters.\cite{park2008bayesian}
+=======
+\section{Background and Motivation}
+\vmcomment{I don't think you need a separate Background section; make it a Methods subsection if needed}
+>>>>>>> 454fc9dcb7215da08f8dca241a67a31bd26acfc4
 
 \section{Methods}
 
