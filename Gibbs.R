@@ -1,11 +1,12 @@
 library(MASS) #For mvrnorm
 library(statmod) #For rinvgauss
 library(glmnet) #For setting initial Lasso estimates
-library(lars)
+library(lars) #Has Diabetes data
+library(Matrix) #for de-sparsing glmnet coefficients
 
+#LOAD DIABETES DATA
 data(diabetes)
 attach(diabetes)
-#x.diab=x*1/sd(x[,1])
 x.diab=x
 y.diab=y-mean(y)
 detach(diabetes)
@@ -36,43 +37,68 @@ gen_A<-function(X,tau2s){
   return(t(X)%*%X+solve(diag(tau2s)))
 }
 
-#GENERATE TEST DATA, SCALE + CENTER AS NEEDED
-Xraw<-matrix(rnorm(700),ncol=7)
-Xraw[,5]=rnorm(100,Xraw[,4])
-yuncent=Xraw[,1]+5*Xraw[,2]-5*Xraw[,3]+Xraw[,4]+rnorm(100)
-y=yuncent-mean(yuncent)
-X=scale(Xraw)
+GibbsSample<-function(y,x,lambda,samples=10000,burnin=1000){
+ #y       - Array of length n
+ #x       - Matrix of dimensions nxp
+ #lambda  - 
+ #samples - Number of (non-burn in) Gibbs samples
+ #burnin  - Count of burn in samples
 
-test=glmnet(x.diab,y.diab)
+ #Create output/saving arrays
+  p=dim(x)[2]
+  betas=matrix(0,nrow=samples+burnin,ncol=p)
+  sigma2s=matrix(0,nrow=samples+burnin,ncol=1)
+  tau2s=matrix(0,nrow=samples+burnin,ncol=p)
+ 
+ #Initialize starting values
+  start=glmnet(x,y,lambda=c(lambda))
+  betas[1,]=Matrix(start$beta)[,1]
+  sigma2s[1,]=var(y-x%*%betas[1,])
+  tau2s[1,]=1/sqrt((lambda^2)*sigma2s[1,]/(betas[1,]^2)+lambda^2)
 
-#INITIALIZE PARAMETERS
-n=floor(length(test$lambda)/2)
-#lambdastart=test$lambda[n]
-lambdastart=.237
-betastart=array(test$beta[,n])
-sigma2start=var(y.diab-x.diab%*%betastart)[1,1]
-tau2start=1/sqrt((lambdastart^2)*sigma2start/betastart^2)+lambdastart^2
-
-#These don't seem to be working as intended... Check tau2s in particular
-betas=matrix(0,nrow=10000,ncol=10);betas[1,]=betastart
-tau2s=matrix(0,nrow=10000,ncol=10);tau2s[1,]=tau2start
-sigma2s=matrix(0,nrow=10000,ncol=1);sigma2s[1,]=sigma2start
-
-for(i in 2:10000){
-	betas[i,]=sample_betas(y.diab,x.diab,sigma2s[i-1,],tau2s[i-1,])
-	sigma2s[i,]=sample_sigma2(y.diab,x.diab,betas[i,],tau2s[i-1,])
-	tau2s[i,]=sample_tau2s(betas[i,],sigma2s[i,],lambdastart)
+ #Run Gibbs sampler
+  for(i in 2:(samples+burnin)){
+    betas[i,]=sample_betas(y,x,sigma2s[i-1,],tau2s[i-1,])
+    sigma2s[i,]=sample_sigma2(y,x,betas[i,],tau2s[i-1,])
+    tau2s[i,]=sample_tau2s(betas[i,],sigma2s[i,],lambda)
+  }
+ 
+ #Remove burn in samples and return
+  inds=c((burnin+1):(samples+burnin))
+  return(list("betas"=betas[inds,],"sigma2s"=sigma2s[inds,],"tau2s"=tau2s[inds,]))
 }
 
-hist(betas[,1])#0
-hist(betas[,2])#-200
-hist(betas[,3])#525
-hist(betas[,4])#300
-hist(betas[,5])#-100
-hist(betas[,6])#0
-hist(betas[,7])#-180
-hist(betas[,8])#100
-hist(betas[,9])#500
-hist(betas[,10])#70
+MMLGibbsSample<-function(y,x,kmax=100,samples=10000,burnin=1000){
+  #Uses MML to find an estimate for lambda
+  #NOTE - REQUIRES OLS ESTIMATES (n>p, t(X)%*%X full rank, etc etc)
+  lambdas=rep(0,kmax)  
 
-print("Stop pressing ctrl-r")
+  p=dim(x)[2]
+  ols=lm(y~x)
+  lambdas[1]=p*sqrt(var(ols$residuals))/sum(abs(ols$coefficients[2:(1+p)]))
+  
+  for(k in 2:kmax){
+    gsample=GibbsSample(y,x,lambdas[k-1],samples,burnin)
+    lambdas[k]=sqrt(2*p/sum(apply(gsample$tau2s,2,mean)))
+    print(lambdas[k])
+  }
+  gsample=GibbsSample(y,x,lambdas[kmax])
+  
+  return(list("betas"=gsample$betas,"sigma2s"=gsample$sigma2s,"tau2s"=gsample$tau2s, "lambdas"=lambdas))
+}
+
+test=MMLGibbsSample(y.diab,x.diab,kmax=50,samples=1000,burnin=500)
+
+sorted=apply(test$betas,2,sort)
+
+#pdf('Figure2Recreation.pdf')
+plot(c(min(sorted[501,]),max(sorted[9500,])),c(1,10),type='n',xlab="Standardized Coefficients",ylab="Variable Number",yaxt='n')
+axis(2,at=c(1:10), labels=c(10:1))
+for(i in 1:10){
+      lines(sorted[c(501,9500),i],c(11-i,11-i))
+      lines(sorted[c(501,501),i],c(11-i-.1,11-i+.1))
+      lines(sorted[c(9500,9500),i],c(11-i-.1,11-i+.1))
+      points(sorted[5000,i],11-i,pch='X')
+}
+abline(v=0)
+#dev.off()
