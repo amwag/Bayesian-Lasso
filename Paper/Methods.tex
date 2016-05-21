@@ -29,29 +29,37 @@
   The Bayesian Lasso, building on the interpretation of Tibshirani, places Laplace priors on linear regression coefficients to allow for Bayesian approaches to parameter and error estimation. An efficient Gibbs sampler allows for quick computation and may be exanded to other forms of penalized regression.
 \end{abstract}
 
-\section{Introduction}
-Linear regression is a broad problem with a myriad of proposed techniques for solving. At its heart, linear regression assumes that we have some vector of responses, $\boldsymbol{y}$, which depend linearly on some covariates, $\boldsymbol{X}$. Formally, accounting for an error term, we wish to fit the model \[
+\section{Introduction}\label{Introduction}
+Regression problems are an extremely common class of approaches to finding linear relationships (or more complex relationships) between a vector of $p$ explanatory variables, $x$, and a response variable $y$. The straight forward approach to these problems, even introduced at the most basic level of statistics, is ordinary least squares regression. 
+
+OLS regression is fairly well understood, allowing for estimates of regression coefficients, prediction, and error estimation. Despite this, ordinary least squares has a number of problems. Correlation between $x$ variables may conflate the relationship with $y$, resulting in biased estimates of regression coefficients.
+
+Another problem that is becoming increasingly common with the prevalence of large datasets, a researcher may not know which of the $x$ variables are truly related to $y$, and may have $p$ explanatory variables when only $p'<p$ of them drive the relationship in $y$. While the relationship between some regressors and $y$ should be null, OLS will also tend to fit all regression coefficients with at least non-zero value, as this will usually produce minor decreases in the squared error.\cite{seeger2008bayesian}
+
+This takes the problem of finding the best regression coefficients, and introduces a second problem of model selection. For small problems, a total of $2^p$ possible models exist and may be full explored and evaluated according to some information critirion such as AICC or BIC. For a problem like assessing DNA microarray data, where thousands or tens of thousands of data points are collected for tens or hundreds of people, individually assessing models becomes impossible.\cite{ishwaran2005spike}
+
+This particular problem introduces two similar ideas, selection and shrinkage. A method is required that will either select which estimates will be non-zero, or an alternative view is that it needs to shrink estimates to zero. In the case of the gene expression data, a Bayesian approach akin to a constrained optimization problem known as spike and slab priors was used.\cite{ishwaran2005spike}
+
+Another form of penalized regression, the Least Absolute Shrinkage and Selection Operator (Lasso), limits the $L_1$ norm of coefficients to produce zero estimates for coefficients. This same idea can be found in signal processing, where Basis Pursuit seeks to select from many different waveforms by penalizing their $L_1$ norms.\cite{chen2001atomic}
+
+One early shortcoming of the Lasso was a lack of estimation of variability. Simple solutions, such as bootstrap sampling, can easily be demonstrated to have problems overestimating zeros.\cite{kyung2010penalized} In fact, it can be shown that these estimates are not even consistent as sample sizes increase.\cite{shao1996bootstrap} One approach based on a correction to sandwich estimation, point estimation of standard deviations.\cite{fan2001variable}
+
+The Bayesian Lasso builds on the idea proposed by Tibshirani's Lasso, of treating the estimatimates as least squares estimates with Laplace prior distributions placed on regression parameters. By taking advantage of a reexpression of the Laplace distribution an effective Gibbs sampler can be created to produce credible intervals of estimates.\cite{tibshirani1996regression}
+
+\section{Background and Methods}
+Linear regression assumes that we have some vector of responses, $\boldsymbol{y}$, which depend linearly on some covariates, $\boldsymbol{X}$. Formally, accounting for an error term, we wish to fit the model \[
 \boldsymbol{y} = \mu \boldsymbol{1}_n + \boldsymbol{X}\boldsymbol{\beta}+\boldsymbol{\epsilon}
 \] where $\boldsymbol{y}$ is an $n \times 1$ vector, $\mu$ is the mean of $\boldsymbol{y}$, $\boldsymbol{X}$ is a matrix of regressors (typically standardized), and $\boldsymbol{\epsilon}$ is a vector of indepedent and identically distributed zero mean normal variables with an unknown variance. For the sake of this discussion we will assume that the $\boldsymbol{y}$ has zero mean ($\mu=0$), noting that in practice this can be easily achieved by subtracting the sample mean estimate.
 
-What is really of interest is the regression coefficients, $\boldsymbol{\beta}$. These can be used for prediction when new values of regressors are given, or they may be of interest for their interpretation on the effects of certain regressor values on the dependent $\boldsymbol{y}$. Irrespective of the use, there are a number of approaches to finding the regressor coefficients. One familiar method, ordinary least squares, seeks to minimize least squares error\[
+What is of interest is the regression coefficients, $\boldsymbol{\beta}$. These can be used for prediction when new values of regressors are given, or they may be of interest for their interpretation on the effects of certain regressor values on the dependent $\boldsymbol{y}$. Irrespective of the use, there are a number of approaches to finding the regressor coefficients. One familiar method, ordinary least squares, seeks to minimize least squares error\[
 \min_{\boldsymbol{\beta}} \hspace{.1cm} (\boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta})^T(\boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta}).
-\] While OLS estimates are a straight-forward and simple approach, Section~\ref{Motivation} details some of the shortcomings of this method.
+\] While OLS estimates are a straight-forward and simple approach, Section~\ref{Introduction} details some of the shortcomings of this method.
 
-Penalized regression takes a similar approach, trying to minimize the square error of predicted values, but with further constraints on regression cofficients. Of particular interest is least absolute shrinkage and selection operator (Or Lasso), which penalizes the sum of the absolute value of the coefficients. For some penalty weight $\lambda \geq 0$, the Lasso has the form \[
-\min_{\boldsymbol{\beta}}  \hspace{.1cm} (\boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta})^T(\boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta})+\lambda\sum_{j=1}^p|\beta_j|.
-\] In the Lasso original derivation it was noted that these estimates can be equivalently viewed as posterior modes of OLS estimates, when independent Laplace priors are placed on the $\boldsymbol{\beta}$s.\cite{tibshirani1996regression}
-
-This idea can be expanded to other penalized regressions of the form  \[
+Penalized regression takes a similar approach, trying to minimize the square error of predicted values, but with further constraints on regression cofficients. One form of penalization, known as bridge regression, takes the form  \[
 \min_{\boldsymbol{\beta}}  \hspace{.1cm} (\boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta})^T(\boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta})+\lambda\sum_{j=1}^p|\beta_j|^q
-\] for some $q\geq0$.\cite{park2008bayesian} These are collectively known as Bridge Regression, though $q=1$ (Lasso Regression) and $q=2$ (Ridge Regression) have appealing and better understood properties.
+\] for some $q\geq0$.\cite{park2008bayesian} The cases where $q=1$ (Lasso Regression) and $q=2$ (Ridge Regression) have appealing and better understood properties.
 
-\section{Background and Motivation}\label{Motivation}
-Ordinary least squares estimates are well understood, allowing for estimation of fit parameters and error suitable to many applications.\emph{\color{red} (I want to find something to cite for this) \color{black}} This method is not without its setbacks, and alternative approaches are required in many situations. 
-
-Correlated regressor variables, for example, cause problems in estimating the statistical properties of OLS $\boldsymbol{\beta}$ estimates. OLS will also tend to fit all $\beta_j$ with at least non-zero value, as this will usually produce minor decreases in the squared error.\cite{seeger2008bayesian} This last problem helps to illustrate the desire for sparsity, a property that can be assumed \emph{a priori} or may be required due to underdetermined-ness of data.
-
-While the Lasso does improve on OLS point estimates, until recently error estimates were difficult to derive. The more desirous property of the Lasso is its ability to produce sparce estimates of parameters. It accomplishes this task by restricting solutions onto an $L_1$ 'ball' around the origin. This is more obvious from the dual formulation, 
+The more desirous property of the Lasso is its ability to produce sparce estimates of parameters. It accomplishes this task by restricting solutions onto an $L_1$ 'ball' around the origin. This is more obvious from the dual formulation, 
 \begin{align*}
 \min_{\boldsymbol{\beta}}  \hspace{.1cm} &(\boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta})^T(\boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta})\\
 \text{subject to} \hspace{.1cm}&\sum_{j=1}^p|\beta_j|\leq r
@@ -64,15 +72,39 @@ for some $r$ determined by $\lambda$. Figure~\ref{LassoPlot} shows how this pena
   \caption{This example illustrates the tendancy for Lasso estimates to be driven to 0, compared with Ridge Regression estimates which are close to but not exactly 0 for $\beta_1$. \emph{\color{red} (I want to make this side by side, and 1:1)\color{black}}}
 \end{figure}
 
-While sparcity may be an \emph{a priori} assumption made about the data, underdetermined data requires this assumption to create useful models. One common field often presented with this problem is the study of gene expression, where there may be thousands to hundreds of thousands of predictors but only a few hundred data points.\cite{seeger2008bayesian}
+For this reason we are most interested in the Lasso. The standard form representation, for some penalty weight $\lambda \geq 0$, has the form \[
+\min_{\boldsymbol{\beta}}  \hspace{.1cm} (\boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta})^T(\boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta})+\lambda\sum_{j=1}^p|\beta_j|.
+\] In the Lasso original derivation it was noted that these estimates can be equivalently viewed as posterior modes of OLS estimates, when independent Laplace priors are placed on the $\boldsymbol{\beta}$s.\cite{tibshirani1996regression}
 
 The Bayesian Lasso, in keeping with Tibshirani's original interpretation, places independent Laplace (or double exponential) distributions on the parameters. Specifically, \[
 \pi(\beta|\sigma^2)=\prod_{j=1}^p\frac{\lambda}{2\sqrt{\sigma^2}}e^{-\lambda |\beta_j|/\sqrt{\sigma^2}}
 \] is placed on each distribution, which results in a unimodal posterior. Other prior distributions have been considred, but unimodality is key for Lasso estimates as non-unimodal posterior distributions cause convergence problems.
 
-In the paper by Park and Casella, they produce a heirarchical models along with a Gibbs sampling technique to sample from posterior distributions. Alongside this formulation they also present an approach to a data-driven estimation for $\lambda$ hyperparameters.\cite{park2008bayesian}
+\subsection{Prior Distributions}
+In keeping with our normal errors being independent and identically distributed Normals, then the response vector is distributed, \[
+\mathbf{y}|\mu,\mathbf{X},\boldsymbol\beta,\sigma^2 \sim \text{N}_n(\mu \mathbf{1}_n+\mathbf{X}\boldsymbol\beta,\sigma^2\mathbf{I}_n), \] but again noting that the vector $\mathbf{y}$ should be centered, resulting in $\mu=0$. Altneratively, an independent flat prior on $\mu$ can be used without affecting conjugacy of relevant variables.
 
-\section{Methods}
+The variance $\sigma^2$ can be given an inverse gamma prior distribution (while maintaining conjugacy), but the treatment by \cite{park2008bayesian} instead uses an improper prior, $1/\sigma^2$. This choice of $\sigma^2$ is also important in maintaining the unimodality of $\boldsymbol\beta$.
+
+The variances of $\boldsymbol\beta$, $\tau_1^2,...,\tau_p^2$, are given independent distributions of the form, \[ \tau^2_j \sim \frac{\lambda^2}{2}e^{-\lambda^2\tau^2_j/2}d\tau^2_j.\] 
+
+The regression parameters $\boldsymbol\beta$, conditioned on their variance estimates $\tau_1^2,...,\tau_p^2$, are given a normal prior, \[ 
+\boldsymbol\beta|\sigma^2,\tau^2_1,...,\tau^2_p\sim\text{N}_p(\mathbf{0}_p,\sigma^2\mathbf{D}_\tau),\] with \[ \mathbf{D}_\tau=\text{diag}(\tau_1^2,...,\tau^2_p) \] which is not the double exponential prior intended. To arrive at the desired laplace distribution, the representation found in \cite{andrews1974scale} allows us to express the Laplace distribution as a scale mixture of normal distributions, \[ \frac{a}{2}e^{-a|z|}=\int^\infty_0
+\frac{1}{\sqrt{2\pi s}}e^{-z^2/(2s)}\frac{a^2}{2}e^{-a^2s/2}ds.\] We can then integrate out $\tau^2_1,...,\tau^2_p$ to arrive at the desired distribution, \[ \pi(\boldsymbol\beta|\sigma^2)=\prod^p_{j=1}\frac{\lambda}{2\sqrt{\sigma^2}}e^{-\lambda|\beta_j|/\sqrt{\sigma^2}}, \] which is a Laplace prior. Again it is worth noting that conditioning on $\sigma^2$ produces a unimodal distribution, while independent Laplace priors on $\boldsymbol\beta$ causes convergence problems.
+
+\subsection{Full Conditionals}
+With our priors properly defined, we are then able to sample consecutively from the full conditional distributions of $\boldsymbol\beta$, $\sigma^2$, and $\tau^2_1,...,\tau^2_p$. First defining the matrix $\mathbf{A}=\mathbf{X}^T\mathbf{X}+\mathbf{D}_\tau^{-1}$ for simplification, \[
+\boldsymbol\beta|\mathbf{y},\mathbf{X},\sigma^2,\boldsymbol\tau^2 \sim \text{N}_p(\mathbf{A}^{-1}\mathbf{X}^T\mathbf{y},\sigma^2\mathbf{A}^{-1}) \]. The full conditional of the variance is, \[ \sigma^2|\mathbf{y},\mathbf{X},\boldsymbol\beta,\boldsymbol\tau^2 \sim \text{InvGamma}\left(\alpha'=\frac{n-1}{2}+\frac{p}{2},\beta'=(\mathbf{y}-\mathbf{X}\boldsymbol\beta)^T(\mathbf{y}-\mathbf{X}\boldsymbol\beta)+\frac{\boldsymbol\beta\mathbf{D}_\tau^{-1}\boldsymbol\beta}{2}\right). \] And lastly the full conditionals of the coefficient variances $\tau^2_1,...,\tau^2_p$ are independent, with \[
+\frac{1}{\tau_j^2} | \boldsymbol\beta, \sigma^2, \lambda \sim \text{InvGaussian}\left(\mu'=\sqrt\frac{\lambda^2\sigma^2}{\beta_j^2}, \lambda'=\lambda^2\right). \] We can then produce a Gibbs sampler by consecutively sampling each of these distributions.
+
+\subsection{Empirical Bayesian Selection of $\lambda$}
+One point that has yet to be addressed is the selection of the hyperparameter $\lambda$. A typical approach such as cross-validation is suitable for many applications, but the Bayesian approach taken in \cite{park2008bayesian} allows us to take advantage of the Monte Carlo EM algorithm proposed in \cite{casella2001empirical}. Here, we start with $\lambda^{(0)}$ based on the ordinary least squares estiamtes \[ 
+\lambda^{(0)}=\frac{p\sqrt{\hat\sigma^2_{LS}}}{\Sigma^p_{j=1}|\hat\beta_j^{LS}|} 
+\] which is then updated after a run of the Gibbs sampler according to \[ 
+\lambda^{(k)}=\sqrt\frac{2p}{\Sigma^p_{j=1}E_\lambda[\tau^2_j|\mathbf{y}]}
+\] by replacting the explectation with an average from the Gibbs sample. 
+
+\emph{Note: I feel like I'm mimicing the original paper too much in some places, but I also feel like there's not really a lot of nuance in how a lot of this is explained. Any tips?}
 
 \section{Results}
 
