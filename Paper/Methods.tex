@@ -13,6 +13,12 @@
 
 \bibliographystyle{plainnat}
 
+\usepackage{color}
+\usepackage{ulem}
+\newcommand{\vmdel}[1]{\sout{#1}}
+\newcommand{\vmadd}[1]{\textbf{\color{red}{#1}}}
+\newcommand{\vmcomment}[1]{({\color{blue}{VM's comment:}} \textbf{\color{blue}{#1}})}
+
 \begin{document}
 %%\maketitle
 
@@ -30,21 +36,31 @@
 \end{abstract}
 
 \section{Introduction}\label{Introduction}
-Regression problems are an extremely common class of approaches to finding linear relationships (or more complex relationships) between a vector of $p$ explanatory variables, $x$, and a response variable $y$. The straight forward approach to these problems, even introduced at the most basic level of statistics, is ordinary least squares regression. 
+Regression problems are an extremely common class of approaches to finding linear relationships (or more complex relationships) between a vector of $p$ explanatory variables, $x$, and a response variable $y$. \vmcomment{All vectors and matrices should be bolded.} 
+The straight forward approach to these problems, even introduced at the most basic level of statistics, is ordinary least squares \vmadd{(OLS)} regression. 
+\vmcomment{Maybe include some refs; also mention examples of scientific or engineering problems solved by regression.}
 
-OLS regression is fairly well understood, allowing for estimates of regression coefficients, prediction, and error estimation. Despite this, ordinary least squares has a number of problems. Correlation between $x$ variables may conflate the relationship with $y$, resulting in biased estimates of regression coefficients.
+OLS regression is fairly well understood, allowing for estimates of regression coefficients, prediction, and error estimation. Despite this, ordinary least squares has a number of problems. Correlation between $x$ variables may conflate the relationship with $y$, resulting in biased estimates of regression coefficients \vmcomment{Reference?}.
+Another problem that is becoming increasingly common with the prevalence of large datasets, a researcher may not know which of the $x$ variables are truly related to $y$, and may have $p$ explanatory variables when only $p'<p$ of them drive the relationship in $y$. While the relationship between some regressors and $y$ should be null, OLS will also tend to fit all regression coefficients with at least non-zero value, as this will usually produce minor decreases in the squared error \citep{seeger2008bayesian}.
 
-Another problem that is becoming increasingly common with the prevalence of large datasets, a researcher may not know which of the $x$ variables are truly related to $y$, and may have $p$ explanatory variables when only $p'<p$ of them drive the relationship in $y$. While the relationship between some regressors and $y$ should be null, OLS will also tend to fit all regression coefficients with at least non-zero value, as this will usually produce minor decreases in the squared error.\cite{seeger2008bayesian}
+This takes the problem of finding the best regression coefficients, and introduces a second problem of model selection. For small problems, a total of $2^p$ possible models exist and may be full explored and evaluated according to some information critirion such as AICC or BIC. For a problem like assessing DNA microarray data, where thousands or tens of thousands of data points are collected for tens or hundreds of people, individually assessing models becomes impossible \citep{ishwaran2005spike}.
 
-This takes the problem of finding the best regression coefficients, and introduces a second problem of model selection. For small problems, a total of $2^p$ possible models exist and may be full explored and evaluated according to some information critirion such as AICC or BIC. For a problem like assessing DNA microarray data, where thousands or tens of thousands of data points are collected for tens or hundreds of people, individually assessing models becomes impossible.\cite{ishwaran2005spike}
+This particular problem introduces two similar ideas, selection and shrinkage. \
+\vmcomment{1) What particular problem?; 2) How can a problem introduce ideas?}
+ A method is required that will either select which estimates will be non-zero, or an alternative view is that it needs to shrink estimates to zero. In the case of the gene expression data, a Bayesian approach akin to a constrained optimization problem known as spike and slab priors was used \cite{ishwaran2005spike}. 
+ \vmcomment{Explain in words the gist of the idea behind spike and slab priors.}
 
-This particular problem introduces two similar ideas, selection and shrinkage. A method is required that will either select which estimates will be non-zero, or an alternative view is that it needs to shrink estimates to zero. In the case of the gene expression data, a Bayesian approach akin to a constrained optimization problem known as spike and slab priors was used.\cite{ishwaran2005spike}
+Another form of penalized regression, the Least Absolute Shrinkage and Selection Operator (Lasso), limits the $L_1$ norm of coefficients to produce zero estimates for \vmadd{some of the} coefficients. 
+This same idea can be found in signal processing, where Basis Pursuit seeks to select from many different waveforms by penalizing their $L_1$ norms \citep{chen2001atomic}.
 
-Another form of penalized regression, the Least Absolute Shrinkage and Selection Operator (Lasso), limits the $L_1$ norm of coefficients to produce zero estimates for coefficients. This same idea can be found in signal processing, where Basis Pursuit seeks to select from many different waveforms by penalizing their $L_1$ norms.\cite{chen2001atomic}
+One early shortcoming of the Lasso was a lack of estimation of variability. Simple solutions, such as bootstrap sampling, can easily be demonstrated to have problems overestimating zeros \citep{kyung2010penalized}.
+\vmcomment{Do you mean ``overestimating the number of zero coefficients?}
+In fact, it can be shown that these estimates are not even consistent as sample sizes increase \citep{shao1996bootstrap}. 
+One approach based on a correction to sandwich estimation, point estimation of standard deviations \citep{fan2001variable}. 
+\vmcomment{I didn't understand the last sentence --- please re-write.}
 
-One early shortcoming of the Lasso was a lack of estimation of variability. Simple solutions, such as bootstrap sampling, can easily be demonstrated to have problems overestimating zeros.\cite{kyung2010penalized} In fact, it can be shown that these estimates are not even consistent as sample sizes increase.\cite{shao1996bootstrap} One approach based on a correction to sandwich estimation, point estimation of standard deviations.\cite{fan2001variable}
-
-The Bayesian Lasso builds on the idea proposed by Tibshirani's Lasso, of treating the estimatimates as least squares estimates with Laplace prior distributions placed on regression parameters. By taking advantage of a reexpression of the Laplace distribution an effective Gibbs sampler can be created to produce credible intervals of estimates.\cite{tibshirani1996regression}
+The Bayesian Lasso builds on the idea proposed by Tibshirani's Lasso, of treating the estimatimates as least squares estimates with Laplace prior distributions placed on regression parameters. 
+By taking advantage of a \vmdel{reexpression} \vmadd{scale mixture of normals representation} of the Laplace distribution an effective Gibbs sampler can be created to produce credible intervals of \vmadd{regression coefficient} estimates \citep{tibshirani1996regression}.
 
 \section{Background and Methods}
 Linear regression assumes that we have some vector of responses, $\boldsymbol{y}$, which depend linearly on some covariates, $\boldsymbol{X}$. Formally, accounting for an error term, we wish to fit the model \[
