@@ -28,7 +28,7 @@
   The Bayesian Lasso, building on the interpretation of Tibshirani, places Laplace priors on linear regression coefficients to allow for Bayesian approaches to parameter and error estimation. An efficient Gibbs sampler allows for quick computation and may be extended to other forms of penalized regression.
 \end{abstract}
 
-TODO: Hoff edits, full conditionals, integration of $\tau$, check convergence
+TODO: Hoff edits, full conditionals, integration of $\tau$, check convergence, anything in ALLCAPS
 
 \section{Introduction}\label{Introduction}
 Regression problems are an extremely common class of approaches to finding linear relationships (or more complex relationships) between a vector of $p$ explanatory variables, $\mathbf{x}$, and a response variable $\mathbf{y}$. The straight forward approach to these problems, even introduced at the most basic level of statistics, is ordinary least squares (OLS) regression. GIVE EXAMPLES OF PROBLEMS SOLVED VIA OLS
@@ -43,7 +43,7 @@ Gene expression data is a great example of the problem the Lasso seeks to solve.
 
 In the case of the gene expression data, \cite{ishwaran2005spike} chose a Bayesian approach akin to a constrained optimization problem known as spike and slab priors was used. EXPLAIN SPIKE AND SLAB HERE
 
-Another form of penalized regression, the Least Absolute Shrinkage and Selection Operator (La}sso), limits the $L_1$ norm of coefficients to produce zero estimates for coefficients. This same idea can be found in signal processing, where Basis Pursuit seeks to select from many different waveforms by penalizing their $L_1$ norms as can be seen in the work by \cite{chen2001atomic}.
+Another form of penalized regression, the Least Absolute Shrinkage and Selection Operator (Lasso), limits the $L_1$ norm of coefficients to produce zero estimates for coefficients. This same idea can be found in signal processing, where Basis Pursuit seeks to select from many different waveforms by penalizing their $L_1$ norms as can be seen in the work by \cite{chen2001atomic}.
 
 One early shortcoming of the Lasso was a lack of estimation of variability. Simple solutions, such as bootstrap sampling, can easily be demonstrated to have problems overestimating the number of zero components as shown by \cite{kyung2010penalized}. In fact, it was shown by \cite{shao1996bootstrap} that these estimates are not even consistent as sample sizes increase. 
 
