@@ -82,6 +82,11 @@ GibbsSample<-function(y,x,lambda,samples=10000,burnin=1000){
   tau2s[1,]=1/sqrt(lambda^2*sigma2s[1,]/betas[1,]^2+lambda^2)
   tau2s[1,][tau2s[1,]==0]=min(tau2s[1,][tau2s[1,]!=0])
 
+ #Initialize wild starting values
+  betas[1,]=matrix(rep(1000000,10))
+  sigma2s[1,]=1000000
+  tau2s[1,]=matrix(rep(1000000,10))
+
  #Run Gibbs sampler
   for(i in 2:(samples+burnin)){
     betas[i,]=sample_betas(y,x,sigma2s[i-1,],tau2s[i-1,])
@@ -94,6 +99,58 @@ GibbsSample<-function(y,x,lambda,samples=10000,burnin=1000){
   if(subsample==TRUE){
     inds=inds[seq(1,length(inds),5)]
   } 
+
+  #inds=c(1:(burnin+samples))
+
+  return(list("betas"=betas[inds,],"sigma2s"=sigma2s[inds,],"tau2s"=tau2s[inds,]))
+}
+
+
+
+GibbsSampleBadStart<-function(y,x,lambda,samples=10000,burnin=1000){
+ #y       - Array of length n
+ #x       - Matrix of dimensions nxp
+ #lambda  - 
+ #samples - Number of (non-burn in) Gibbs samples
+ #burnin  - Count of burn in samples
+
+  subsample=FALSE
+  if(subsample==TRUE){
+    samples=samples*5
+  }
+
+ #Create output/saving arrays
+  p=dim(x)[2]
+  betas=matrix(0,nrow=samples+burnin,ncol=p)
+  sigma2s=matrix(0,nrow=samples+burnin,ncol=1)
+  tau2s=matrix(0,nrow=samples+burnin,ncol=p)
+ 
+ #Initialize starting values
+  #start=glmnet(x,y,lambda=c(lambda))
+  #betas[1,]=Matrix(start$beta)[,1]
+  #sigma2s[1,]=var(y-x%*%betas[1,])
+  #tau2s[1,]=1/sqrt(lambda^2*sigma2s[1,]/betas[1,]^2+lambda^2)
+  #tau2s[1,][tau2s[1,]==0]=min(tau2s[1,][tau2s[1,]!=0])
+
+ #Initialize wild starting values
+  betas[1,]=matrix(rep(1000000,10))
+  sigma2s[1,]=1000000
+  tau2s[1,]=matrix(rep(1000000,10))
+
+ #Run Gibbs sampler
+  for(i in 2:(samples+burnin)){
+    betas[i,]=sample_betas(y,x,sigma2s[i-1,],tau2s[i-1,])
+    sigma2s[i,]=sample_sigma2(y,x,betas[i,],tau2s[i-1,])
+    tau2s[i,]=sample_tau2s(betas[i,],sigma2s[i,],lambda)
+  }
+
+  inds=c((burnin+1):(samples+burnin))
+
+  if(subsample==TRUE){
+    inds=inds[seq(1,length(inds),5)]
+  } 
+
+  #inds=c(1:(burnin+samples))
 
   return(list("betas"=betas[inds,],"sigma2s"=sigma2s[inds,],"tau2s"=tau2s[inds,]))
 }
@@ -131,6 +188,7 @@ hyperpriorGibbsSample<-function(y,x,r=1,delta=1.78,samples=10000,burnin=1000){
   }
  
   inds=c((burnin+1):(samples+burnin))
+  #inds=c(1:(samples+burnin))
   return(list("betas"=betas[inds,],"sigma2s"=sigma2s[inds,],"tau2s"=tau2s[inds,],"lambdas"=lambdas[inds,]))
 }
 
@@ -297,7 +355,7 @@ lambdaConvergencePlot<-function(y,x,kmax,samples=10000,burnin=1000,save=FALSE){
   if(save){pdf('SaveLambdaConverge.pdf')}
   test=MMLGibbsSample(y,x,kmax,samples,burnin)
   plot(test$lambda,type='l',xlab='Iteration',ylab=expression(lambda^(k)))
-  abline(h=.237,type=2)
+  abline(h=.237,lty=2)
   abline(h=median(test$lambda[100:kmax]))
   print(median(test$lambda[100:kmax]))
   if(save){dev.off()}
@@ -332,12 +390,28 @@ beta5ACFPlot<-function(y,x,lambda=.237){
   dev.off()
 }
 
-#test=MMLGibbsSample(y.diab,x.diab,kmax=1000,samples=10000,burnin=1000)
+
+
+genLogPosterior<-function(b){
+  sigma=density(b)$bw
+  logpost=rep(0,length(b))
+  for(i in 1:length(logpost)){
+    logpost[i]=mean(dnorm(b[i],b,sigma))
+  }
+  return(logpost)
+}
+
+makeFig2(y.diab,x.diab)
+
+test=GibbsSample(y.diab,x.diab,lambda=.237,samples=10000,burnin=1000)
+test2=GibbsSampleBadStart(y.diab,x.diab,lambda=.237,samples=10000,burnin=1000)
+
+#testh=hyperpriorGibbsSample(y.diab,x.diab,samples=10000,burnin=1000)
 
 #hyperpriorCI(y.diab,x.diab,r=1,delta=1.78,samples=10000,burnin=1000)
 #printEffectiveSizes(y.diab,x.diab)
 #beta5ACFPlot(y.diab,x.diab)
-lambdaConvergencePlot(y.diab,x.diab,kmax=1000,samples=10000,burnin=1000,save=TRUE)
+#lambdaConvergencePlot(y.diab,x.diab,kmax=1000,samples=10000,burnin=1000,save=TRUE)
 #makeFig1(y.diab,x.diab,samples=10000,burnin=1000,save=TRUE)
 #makeFig2(y.diab,x.diab,lambda=0.237,samples=10000,burnin=1000,save=TRUE)
 
