@@ -11,14 +11,7 @@
 
 \renewcommand{\baselinestretch}{1.5} 
 
-
 \bibliographystyle{plainnat}
-
-\usepackage{color}
-\usepackage{ulem}
-\newcommand{\vmdel}[1]{\sout{#1}}
-\newcommand{\vmadd}[1]{\textbf{\color{red}{#1}}}
-\newcommand{\vmcomment}[1]{({\color{blue}{VM's comment:}} \textbf{\color{blue}{#1}})}
 
 \begin{document}
 %%\maketitle
@@ -31,13 +24,11 @@
 \end{center}
 
 \begin{abstract}
-  The Bayesian Lasso, building on the interpretation of Tibshirani, places Laplace priors on linear regression coefficients to allow for Bayesian approaches to parameter and error estimation. Taking advantage of a scale mixture of normals re-expression for the Laplacian distribution allows for easy sampling from full conditionals which in turn culminate in a simple Gibbs sampler.
+  The Bayesian Lasso, building on the interpretation of Tibshirani, places Laplace priors on linear regression coefficients to allow for Bayesian approaches to parameter and error estimation. Taking advantage of a scale mixture of normals re-expression for the Laplacian distribution allows for easy sampling from full conditionals which in turn culminate in a simple Gibbs sampler to produce credible intervals on estimated coefficients.
 \end{abstract}
 
-TODO: full conditionals, integration of $\tau$, anything in ALLCAPS
-
 \section{Introduction}\label{Introduction}
-Regression models are an extremely common class of approaches to finding linear relationships (or more complex relationships) between a vector of $p$ explanatory variables, $\mathbf{x}$, and a response variable $\mathbf{y}$. The straight forward approach to these problems, even introduced at the most basic level of statistics, is ordinary least squares (OLS) regression. GIVE EXAMPLES OF PROBLEMS SOLVED VIA OLS
+Regression models are an extremely common class of approaches to finding linear relationships (or more complex relationships) between a vector of $p$ explanatory variables, $\mathbf{x}$, and a response variable $\mathbf{y}$. The straight forward approach to these problems, even introduced at the most basic level of statistics, is ordinary least squares (OLS) regression. This has a wide array of applications, from studying animal breeding (\cite{mrode2014linear}) to time series modeling and prediction (\cite{brockwell1991time}).
 
 OLS regression is fairly well understood, allowing for estimates of regression coefficients, prediction, and error estimation. Despite this, ordinary least squares has a number of problems. Correlation between $\mathbf{x}$ variables may conflate their relationship with $\mathbf{y}$, resulting in biased estimates of regression coefficients. This was part of the motivation driving the formulation of Ridge Regression by \cite{hoerl1970ridge}.
 
@@ -45,9 +36,9 @@ Another problem that is becoming increasingly common with the prevalence of larg
 
 This takes the problem of finding the best regression coefficients, and introduces a second problem of model selection. For small problems, a total of $2^p$ possible models exist and may be full explored and evaluated according to some information criterion such as AIC or BIC. For a problem like assessing DNA microarray data, where thousands or tens of thousands of data points are collected for tens or hundreds of people, individually assessing models becomes impossible.
 
-Gene expression data is a great example of the problem the Lasso seeks to solve. Many of the variables in $\mathbf{x}$ are not related to the response. This introduces the need for two similar ideas, selection and shrinkage. A method is required that will either select which estimates will be non-zero, or an alternative view is that it needs to shrink estimates to zero (as a means of selecting non-zero eestimates). 
+Gene expression data is a great example of the problem the Lasso seeks to solve. Many of the variables in $\mathbf{x}$ are not related to the response. This introduces the need for two similar ideas, selection and shrinkage. A method is required that will either select which estimates will be non-zero, or an alternative view is that it needs to shrink estimates to zero (as a means of selecting non-zero estimates). 
 
-In the case of the gene expression data, \cite{ishwaran2005spike} chose a Bayesian approach akin to a constrained optimization problem known as spike and slab priors. EXPLAIN SPIKE AND SLAB HERE
+In the case of the gene expression data, \cite{ishwaran2005spike} chose a Bayesian approach akin to a constrained optimization problem known as spike and slab priors. This approach places a prior distribution on the estimates of interest that places a mixture of a flat, uniform distribution (the slab) with a degenerate distribution at zero (the spike). This formulation encourages estimates to have higher probability at 0, and produces low variances for estimates that are more likely to be zero, as explained by \cite{ishwaran2005spike2}. Sadly, this last property (driving variability to 0 for estimates near 0) makes this approach less ideal when interested in assessing the individual parameters rather than the model in its entirety.
 
 Another form of penalized regression, the Least Absolute Shrinkage and Selection Operator (Lasso), limits the $L_1$ norm of coefficients to produce zero estimates for coefficients. This same idea can be found in signal processing, where Basis Pursuit seeks to select from many different waveforms by penalizing their $L_1$ norms as can be seen in the work by \cite{chen2001atomic}.
 
@@ -104,31 +95,48 @@ In keeping with our normal errors being independent and identically distributed 
 
 The regression parameters $\boldsymbol\beta$, conditioned on their variance estimates $\tau_1^2,...,\tau_p^2$, are given a normal prior, \[ 
 \boldsymbol\beta|\sigma^2,\tau^2_1,...,\tau^2_p\sim\text{N}_p(\mathbf{0}_p,\sigma^2\mathbf{D}_\tau),\] with \[ \mathbf{D}_\tau=\text{diag}(\tau_1^2,...,\tau^2_p) \] which is not the double exponential prior intended. To arrive at the desired Laplace distribution, the representation found in \cite{andrews1974scale} allows us to express the Laplace distribution as a scale mixture of normal distributions, \[ \frac{a}{2}e^{-a|z|}=\int^\infty_0
-\frac{1}{\sqrt{2\pi s}}e^{-z^2/(2s)}\frac{a^2}{2}e^{-a^2s/2}ds.\] We can then integrate out $\tau^2_1,...,\tau^2_p$ to arrive at the desired distribution, \[ \pi(\boldsymbol\beta|\sigma^2)=\prod^p_{j=1}\frac{\lambda}{2\sqrt{\sigma^2}}e^{-\lambda|\beta_j|/\sqrt{\sigma^2}}, \] which is a Laplace prior. 
+\frac{1}{\sqrt{2\pi s}}e^{-z^2/(2s)}\frac{a^2}{2}e^{-a^2s/2}ds.\] If we define the priors of $\tau^2$ to be of the form, \[ \tau^2_j \sim \frac{\lambda^2}{2}e^{-\lambda^2\tau^2_j/2}d\tau^2_j\] then we can then integrate out $\tau^2_1,...,\tau^2_p$ to arrive at the desired distribution, \[ \pi(\boldsymbol\beta|\sigma^2)=\prod^p_{j=1}\frac{\lambda}{2\sqrt{\sigma^2}}e^{-\lambda|\beta_j|/\sqrt{\sigma^2}}, \] which is a Laplace prior. 
+
+To illustrate this fact, consider the distribution of a single $\beta_i$ and it's variance $\tau_i^2$. We have, \[
+\beta_i|\sigma^2,\tau_i^2 \sim \frac{1}{\sqrt{2\pi\sigma^2}}\exp{\left( -\frac{\beta_i^2}{2\tau_i^2\sigma^2}\right)}\frac{\lambda^2}{2}\exp{\left( -\frac{\lambda^2\tau_i^2}{2}\right)} 
+\] and we an express $\lambda=a$ and $\sigma^2=s$ we have exactly the form required to integrate the $\tau^2_i$ out.
 
 The variance $\sigma^2$ can be given an inverse gamma prior distribution (while maintaining conjugacy), but the treatment by \cite{park2008bayesian} instead uses an improper prior, $1/\sigma^2$. 
 
-The variances of $\boldsymbol\beta$, $\tau_1^2,...,\tau_p^2$, are given independent distributions of the form, \[ \tau^2_j \sim \frac{\lambda^2}{2}e^{-\lambda^2\tau^2_j/2}d\tau^2_j.\] 
+
 
 \subsubsection{$\boldsymbol\beta$ Conditioning on $\sigma^2$}\label{unimodal}
-Again it is worth noting that conditioning $\boldsymbol\beta$ on $\sigma^2$ produces a unimodal joint distribution, while independent Laplace priors on $\boldsymbol\beta$ do not have ths trait which can cause convergence problems in the Gibbs sampler. This is most obvious when comparing the joint distribution of $\mathbf{y}$ and $\boldsymbol\beta$. Conditioned on $\sigma^2$ as presented this join has the property, \[
-\pi(\mathbf{y},\boldsymbol\beta|\mathbf{X},\sigma^2) \propto \exp{\left(\frac{||\mathbf{y}-\mathbf{X}\boldsymbol\beta||_2}{\sigma^2}+\frac{\lambda ||\boldsymbol\beta||_1}{\sigma^2}\right)}
-\] and we can see that taking the logarithm and maximizing gives us exactly the formulation of the Lasso, as $\sigma^2$ doesn't figure into the maximum (over $\lambda$). If we instead express the $\boldsymbol\beta$ as being independent of $\sigma^2$ we end up with \[
+Again it is worth noting that conditioning $\boldsymbol\beta$ on $\sigma^2$ produces a unimodal joint distribution, while independent Laplace priors on $\boldsymbol\beta$ do not have ths trait which can cause convergence problems in the Gibbs sampler. This is most obvious when comparing the joint distribution of $\mathbf{y}$ and $\boldsymbol\beta$. Conditioned on $\sigma^2$ as presented this join has the property, 
+\begin{align*}
+\pi(\mathbf{y},\boldsymbol\beta|\mathbf{X},\sigma^2) \propto& \exp{\left(\frac{||\mathbf{y}-\mathbf{X}\boldsymbol\beta||_2}{\sigma^2}+\frac{\lambda ||\boldsymbol\beta||_1}{\sqrt{\sigma^2}}\right)}\\
+\propto& \exp{\left(\left|\left|\frac{\mathbf{y}}{\sqrt{\sigma^2}}-\mathbf{X}\frac{\boldsymbol\beta}{\sqrt{\sigma^2}}\right|\right|_2+\lambda \left|\left|\frac{\boldsymbol\beta}{\sqrt{\sigma^2}}\right|\right|_1\right)}
+\end{align*}
+and we can see that taking the logarithm and maximizing (over $\lambda$) gives us exactly the formulation of the Lasso, as $\sigma^2$ doesn't figure into the maximum (over $\lambda$). If we instead express the $\boldsymbol\beta$ as being independent of $\sigma^2$ we end up with \[
 \pi(\mathbf{y},\boldsymbol\beta|\mathbf{X},\sigma^2) \propto \exp{\left(\frac{||\mathbf{y}-\mathbf{X}\boldsymbol\beta||_2}{\sigma^2}+\lambda ||\boldsymbol\beta||_1\right)}.
-\] This then produces different results for different values of $\sigma^2$ which can (but won't always) lead to bimodality as was shown in the toy example presented by \cite{park2008bayesian}. This is not a necessary condition, and only added to aid convergence.
+\] This then produces different results where $\sigma^2$ and $\lambda$ can each produce a unique maximum, which lead to bimodality as was shown in the toy example presented by \cite{park2008bayesian}.
 
 \subsection{Full Conditionals}
 With our priors properly defined, we are then able to sample consecutively from the full conditional distributions of $\boldsymbol\beta$, $\sigma^2$, and $\tau^2_1,...,\tau^2_p$. First defining the matrix $\mathbf{A}=\mathbf{X}^T\mathbf{X}+\mathbf{D}_\tau^{-1}$ for simplification.
 
 In deriving full conditional on $\boldsymbol\beta$ we concern ourselves only with the priors on $\mathbf{y}$ and $\boldsymbol\beta$ to produce a joint distribution that follows,\begin{align*}
-\boldsymbol\beta,\mathbf{y}|\mathbf{X},\sigma^2,\boldsymbol\tau^2 &\propto \exp{\left(-\frac{\boldsymbol\beta^T\mathbf{D}_{\boldsymbol\tau}^{-1}\boldsymbol\beta}{2\sigma^2}-\frac{(\mathbf{y}-\boldsymbol\beta\mathbf{X})^T(\mathbf{X}\boldsymbol\beta)}{2\sigma^2}\right)}\\
-&\propto \exp{\left(-\frac{\boldsymbol\beta^T((\mathbf{X}^T\mathbf{X}+\mathbf{D}_{\boldsymbol\tau}^{-1})/\sigma^2)\boldsymbol\beta}{2}\right)}
+\boldsymbol\beta,\mathbf{y}|\mathbf{X},\sigma^2,\boldsymbol\tau^2 &\propto \exp{\left(-\frac{\boldsymbol\beta^T\mathbf{D}_{\boldsymbol\tau}^{-1}\boldsymbol\beta}{2\sigma^2}-\frac{(\mathbf{y}-\boldsymbol\beta\mathbf{X})^T(\mathbf{y}-\mathbf{X}\boldsymbol\beta)}{2\sigma^2}\right)}\\
+&\propto \exp{\left(-\frac{\boldsymbol\beta^T((\mathbf{X}^T\mathbf{X}+\mathbf{D}_{\boldsymbol\tau}^{-1})/\sigma^2)\boldsymbol\beta+\mathbf{y}^T\mathbf{y}-\mathbf{y}^T\mathbf{X}\boldsymbol\beta+\boldsymbol\beta^T\mathbf{X}^T\mathbf{y}}{2}\right)}
 \end{align*}
-THIS IS WRONG FIX IT
+Inserting some identity matricies of the form $\mathbf{A}^{-1}\mathbf{A}$ leads us to the form
+\begin{align*}
+&\propto \exp{\left(-\frac{(\boldsymbol\beta-\mathbf{A}^{-1}\mathbf{X}^T\mathbf{y})^T\mathbf{A}(\boldsymbol\beta-\mathbf{A}^{-1}\mathbf{X}^T\mathbf{y})}{\sigma^22}\right)}
+\end{align*}
+which gives us a normal of the form
 \[
 \boldsymbol\beta|\mathbf{y},\mathbf{X},\sigma^2,\boldsymbol\tau^2 \sim \text{N}_p(\mathbf{A}^{-1}\mathbf{X}^T\mathbf{y},\sigma^2\mathbf{A}^{-1}). \] 
 
-The full conditional of the variance is, \[ \sigma^2|\mathbf{y},\mathbf{X},\boldsymbol\beta,\boldsymbol\tau^2 \sim \text{InvGamma}\left(\alpha'=\frac{n-1}{2}+\frac{p}{2},\beta'=(\mathbf{y}-\mathbf{X}\boldsymbol\beta)^T(\mathbf{y}-\mathbf{X}\boldsymbol\beta)+\frac{\boldsymbol\beta^T\mathbf{D}_\tau^{-1}\boldsymbol\beta}{2}\right). \] And lastly the full conditionals of the coefficient variances $\tau^2_1,...,\tau^2_p$ are independent, with \[
+The full conditional of the variance $\sigma^2$ follows, 
+\begin{align*}
+\sigma^2|\mathbf{y},\mathbf{X},\boldsymbol\beta,\boldsymbol\tau^2 \propto& \left(\frac{1}{\sqrt{\sigma^2}}\right)^n\exp{\left(-\frac{(\mathbf{y}-\mathbf{X}\boldsymbol\beta)^T(\mathbf{y}-\mathbf{X}\boldsymbol\beta)}{2\sigma^2}\right)}\left(\frac{1}{\sqrt{\sigma^2}}\right)^p\exp{\left( -\frac{\boldsymbol\beta^T\mathbf{D}_{\boldsymbol\tau}\boldsymbol\beta}{2\sigma^2} \right)}\frac{1}{\sigma^2}\\
+\propto&\left(\frac{1}{\sigma^2}\right)^{\frac{n}{2}+\frac{p}{2}+\frac{1}{2}}\exp{\left(-\frac{(\mathbf{y}-\mathbf{X}\boldsymbol\beta)^T(\mathbf{y}-\mathbf{X}\boldsymbol\beta)}{2\sigma^2}-\frac{\boldsymbol\beta^T\mathbf{D}_{\boldsymbol\tau}\boldsymbol\beta}{2\sigma^2}\right)}
+\end{align*}
+and we see that this has a final form,
+\[ \sigma^2|\mathbf{y},\mathbf{X},\boldsymbol\beta,\boldsymbol\tau^2 \sim \text{InvGamma}\left(\alpha'=\frac{n-1}{2}+\frac{p}{2},\beta'=\frac{(\mathbf{y}-\mathbf{X}\boldsymbol\beta)^T(\mathbf{y}-\mathbf{X}\boldsymbol\beta)}{2}+\frac{\boldsymbol\beta^T\mathbf{D}_\tau^{-1}\boldsymbol\beta}{2}\right). \] And lastly the full conditionals of the coefficient variances $\tau^2_1,...,\tau^2_p$ are independent, with \[
 \frac{1}{\tau_j^2} | \boldsymbol\beta, \sigma^2, \lambda \sim \text{InvGaussian}\left(\mu'=\sqrt\frac{\lambda^2\sigma^2}{\beta_j^2}, \lambda'=\lambda^2\right). \] We can then produce a Gibbs sampler by consecutively sampling each of these distributions.
 
 As an aside, if we are interested in keeping $\mu$ in the model, we may simply give it a uniform prior which produces a full coditional that is $\text{N}(\bar{y},\sigma^2/\sqrt{n})$ which can be worked into the Gibbs sampler.
@@ -139,42 +147,40 @@ One point that has yet to be addressed is the selection of the hyperparameter $\
 \] which is then updated after a run of the Gibbs sampler according to \[ 
 \lambda^{(k)}=\sqrt\frac{2p}{\Sigma^p_{j=1}E_{\lambda^{(k)}}[\tau^2_j|\mathbf{y}]}
 \] by replacing the expectation with an average from the Gibbs sample. 
-\vmcomment{Not clear why this is an EM Algorithm.}
 
 \subsubsection{Marginal Maximum Likelihood Update}
 The MML approach to hyperparameter selection treats the problem with an EM algorithm approach where the value of $\lambda$ is considered to be our missing value. This is easy to see when looking at the complete log-likelihood, which after dropping some constants independent of $\lambda$ has the form \[
--\frac{1}{\sigma^2}(||\mathbf{y}-\mathbf{X}\boldsymbol\beta||^2_2)-/frac{1}{2}\sum^p_{j=1}\text{ln}(\tau_j^2)-\frac{1}{2}\sum^p_{j=1}\frac{\beta^2_j}/\sigma^2\tau^2+p\text{ln}(\lambda^2)-\frac{\lambda^2}{2}\sum^p_{j=1}\tau^2_j.
+-\frac{1}{\sigma^2}(||\mathbf{y}-\mathbf{X}\boldsymbol\beta||^2_2)-\frac{1}{2}\sum^p_{j=1}\text{ln}(\tau_j^2)-\frac{1}{2}\sum^p_{j=1}\frac{\beta^2_j}/\sigma^2\tau^2+p\text{ln}(\lambda^2)-\frac{\lambda^2}{2}\sum^p_{j=1}\tau^2_j.
 \] Taking the expectation and further removing terms that don't depend on $\lambda$ (denoted as a constant $C$), we find that \[
 Q(\lambda^{(k)}|\lambda^{(k-1)})=p\text{ln}(\lambda^2)-\frac{\lambda^2}{2}\sum^p_{j=1}E_{\lambda^{(k-1)}}[\tau^2_j|\mathbf{y}]+C
 \] which we can easily maximize by taking a derivative and finding the value of $\lambda$ that maximizes $Q(\lambda^{(k)}|\lambda^{(k-1)})$ and we arrive at 
 \[
-\lambda^{(k)}=\pm\sqrt{\frac{2p}{\sigma^p_{j=1}E_{\lambda^{(k-1)}}[\tau^2_j|\mathbf{y}]}}
-\] which must of course be positive, yielding our maximization step in the algorithm. This procedure also holds true when $\sigma^2$ is given a gamma prior, with a few more $\lambda$ independent components in the complete log-likelihood.
+\lambda^{(k)}=\pm\sqrt{\frac{2p}{\Sigma^p_{j=1}E_{\lambda^{(k-1)}}[\tau^2_j|\mathbf{y}]}}
+\] which must of course be positive, yielding our maximization step in the algorithm. This procedure also holds true when $\sigma^2$ is given a gamma prior, with a few more $\lambda$ independent components in the complete log-likelihood. \cite{park2008bayesian} demonstrated that this holds for $\sigma^2$ being given a gamma prior as well.
 
 \subsection{Hyperprior on $\lambda$}
 As an alternative to finding a point estimate for $\lambda$, in keeping with our otherwise Bayesian approach we may also put a hyperprior on $\lambda$. More accurately, in the interest of maintaining conjugacy, a gamma prior is actually placed on $\lambda^2$, with the form\[
 \pi(\lambda^2)=\frac{\delta^r}{\Gamma(r)}(\lambda^2)^{r-1}e^{-\delta\lambda^2}
-\] where $lambda^2$, $r$, and $\delta$ are all strictly positive. This produces a full conditional distribution for $\lambda^2$ that is also gamma, with shape $p+r$ and rate $\Sigma^p_{j=1}\tau^2_j/2+\delta$. In the original implementation the choice of $r$ and $\delta$ were $r=1$ and $\delta=1.78$ (the same values used in my own analysis) which actually gives an exponential prior on $\lambda^2$ with rate $\delta$ and a mean approximately 10 times the maximum likelihood estimate.
+\] where $\lambda^2$, $r$, and $\delta$ are all strictly positive. This produces a full conditional distribution for $\lambda^2$ that is also gamma, with shape $p+r$ and rate $\Sigma^p_{j=1}\tau^2_j/2+\delta$. In the original implementation the choice of $r$ and $\delta$ were $r=1$ and $\delta=1.78$ (the same values used in my own analysis) which actually gives an exponential prior on $\lambda^2$ with rate $\delta$ and a mean approximately 10 times the maximum likelihood estimate.
 
 \section{Results}
+Any use of an MCMC approach to problem solving must first ensure that the MCMC procedure is producing appropriate results. We will see here that the Gibbs sampler of the Bayesian Lasso has obvious convergence, and has few issues with correlation between samples.
+
 Assessing a penalized regression can be difficult, and with real world problems no underlying truth is known to compare selected models against. In the context of the Bayesian Lasso, we are most concerned with comparing this approach with the standard Lasso. As will also prove relevant, we also compare this approach with Bridge Regression. 
 
 Estimate paths are an informative tool with any penalized regression, looking at how estimates change over varying levels of penalization. Also of interest are the credible intervals of estimates under constant penalization, which will be studied under the marginal maximum likelihood penalty on $\lambda$.
 
-THIS NEEDS WORK!
+Lastly, finding good hyperparameters is required for working with the Lasso, and both proposed techniques are viewed here (with little comparison due to the similarities of their results).
 
 \subsection{Data Set}
-The algorithm found herein has been tested on the same data used by \cite{efron2004least}. This data comprises $n=442$ diabetes patients observed over a one year period. 
-The regression variables \vmdel{comprise of} \vmadd{are} patient age, sex, body mass index, average blood pressure, and six blood serum measurements\vmadd{,} such as ``good'' and bad ``cholesterol''. 
-These were then looked at as linear predictors of the response, a quantitative measure of diabetes progression at the end of the one year observation period.
+The algorithm found herein has been tested on the same data used by \cite{efron2004least}. This data comprises $n=442$ diabetes patients observed over a one year period. The regression variables are patient age, sex, body mass index, average blood pressure, and six blood serum measurements such as good and bad cholesterol. These were then looked at as linear predictors of the response, a quantitative measure of diabetes progression at the end of the one year observation period.
 
 It is worth noting here that the specifics of the data set are not of interest. The discussion here is only focused on the effectiveness of the algorithm and we avoid making any quality judgments of the efficacy of our models in the context of the original data.
 
 \subsection{Assessing the Gibbs Sampler}
 When working with any MCMC approach it is important to step back and consider the effectiveness of the sampling technique. One thing that concerned me early on was the use of successive Gibbs samples, with no comments on the efficacy of such an approach.
 
-To this end, results were assessed using the CODA package by \cite{codapackage}, which can be used \vmdel{the find} \vmadd{to} diagnos\vmadd{e}\vmdel{tics} of an MCMC approach. More specifically, the effective sample sizes\vmadd{, which reflect mixing of the chain,} were of particular interest. 
-\vmcomment{Comment on MCMC convergence too.}
+To this end, results were assessed using the CODA package by \cite{codapackage}, which can be used to diagnose the MCMC approach. More specifically, the effective sample sizes, which reflect mixing of the chain, were of particular interest.
 
 Following the approach used in the original work, samples of size 10,000 were taken from the Gibbs sampler, after a burn in period of 1,000 samples. After repeated resamplings it was found that the fifth covariate, blood serum triglyceride levels, had an effective sample size approximately 40\%-60\% the size of the sample. The cause for this became readily apparent when looking to Figure~\ref{Var5} which shows a significant correlation at low lags. While other variables also displayed some similar issues, triglyceride levels presented the most extreme and consistent case.
 
@@ -186,8 +192,7 @@ Following the approach used in the original work, samples of size 10,000 were ta
 
 To alleviate this issue a sub-sample of Gibbs samples were taken, wherein the sampling was repeated $5 \times 10,000$ times and only every fifth sample was kept. This produced a sample that was of size $n=10,000$, and when reassessing the sample size and autocorrelation all previous issues had vanished.
 
-While having an uncorrelated Gibbs sample is preferred, the results found after adjusting the sampler did not differ in any meaningful way. In the end it would be more suitable to just take a larger sample size rather than a sub-sample to save the information gained for the less correlated variables.
-\vmcomment{Also, auto-correlation is not the enemy, really. Only if the ESSs are ridiculously small, which is a problem for constructing credible intervals.}
+While having an uncorrelated Gibbs sample is preferred, the results found after adjusting the sampler did not differ in any meaningful way. In the end it would be more suitable to just take a larger sample size rather than a sub-sample, as this would provide larger effective sample sizes for the less correlated variables while meeting the effective sample size required for the more problematic variables.
 
 One other important diagnostic to consider was the trace of sample estimates as they converge around the true distribution. In this work and in the original work the Gibbs sampler was run for 10,000 samples after a 1,000 sample burn in. When looking at any of the $\beta_i$ values from the sampler, it appears to converge almost instantly (within a handful of samples). 
 
@@ -196,21 +201,18 @@ No meaningful plots could be produced to demonstrate the convergence on such a s
 \subsection{Convergence Paths}
 When working with penalized regression of any sort, it is important to consider the entire path of estimates as the penalties vary. Figure~\ref{convergence} shows exactly that, allowing us to compare the Bayesian Lasso, Lasso, and Ridge Regression. 
 
-As was noted in the paper by \cite{park2008bayesian}, and made slightly more obvious by the plotting approach taken here, Bayesian Lasso estimates appear to compromise between the Lasso and Ridge Regression estimates. This does not hold for the seventh covariate (good cholesterol levels) but does hold in most cases where the Lasso and Ridge Regression estimates differ. I WANT TO LOOK INTO WHY THIS IS MORE BUT IM NOT REALLY QUITE SURE
-
-ALSO THE STUPID DASHED LINE MAKES NO SENSE, IT TORMENTS ME (Seriously though, it doesn't even match the n-fold cv lasso selected in the other plot... Why do you vex me so, glmnet)
+As was noted in the paper by \cite{park2008bayesian}, and made slightly more obvious by the plotting approach taken here, Bayesian Lasso estimates appear to compromise between the Lasso and Ridge Regression estimates. This does not hold for the seventh covariate (good cholesterol levels) but does hold in most cases where the Lasso and Ridge Regression estimates differ.
 
 \begin{figure}\label{convergence}
   \centering
-    \includegraphics[width=0.7\textwidth]{SaveFigure1.pdf}
-  \caption{Shown here are the convergence paths for the Bayesian Lasso, Lasso, and Ridge Regression. The horizontal lines represent values selected via Marginal Maximum Likelihood for the Bayesian Lasso and n-fold cross-validation in the case of the Lasso estimates. Variables have been separated into three plots for visibility, while allowing easier comparison of the three selection schemes.  \vmcomment{Make all fonts bigger and make sure everything is readable. Also, axis labels do not make sense to me.}}
+    \includegraphics[width=0.9\textwidth]{SaveFigure1.pdf}
+  \caption{Shown here are the convergence paths for the Bayesian Lasso, Lasso, and Ridge Regression. The horizontal lines represent values selected via Marginal Maximum Likelihood for the Bayesian Lasso and n-fold cross-validation in the case of the Lasso estimates. Variables have been separated into three plots for visibility, while allowing easier comparison of the three selection schemes. Estimates are plotted along the x-axis according to their $L_1$ norm as it relates to the maximum $L_1$ norm.}
 \end{figure}
 
 \subsection{Credible Intervals}
 While convergence is important, it is only looking at point estimates which were not the intent of the Bayesian Lasso. To get a more clear picture we turn to the parameter credible intervals. 
 
-Figure~\ref{CIs} shows exactly that, with equal-tailed 95\% credible intervals on each of the parameters. As with the original paper, these were checked with $\lambda$ set via marginal maximum likelihood and hyperprior \vmcomment{Specify the hyperprior.}. 
-In each case the results were indistinguishable from one another, and indistinguishable from the original results.
+Figure~\ref{CIs} shows exactly that, with equal-tailed 95\% credible intervals on each of the parameters. As with the original paper, these were checked with $\lambda$ set via marginal maximum likelihood (MML) and a gamma hyperprior. In each case the results were indistinguishable from one another, and indistinguishable from the original results; shown here are the results with $\lambda$ selected via MML.
 
 The first point that is important to note is that the n-fold ($\bigtriangleup$) and matched $L_1$ norm estimates ($\bigtriangledown$) both fall well within the credible intervals. Also the $L_1$ norm matched estimates (very akin to selecting for the same $\lambda$ value) are almost identical to the Bayesian Lasso estimates. 
 
@@ -223,8 +225,7 @@ The first point that is important to note is that the n-fold ($\bigtriangleup$) 
 \subsection{Hyperparameter Selection}
 Selection of the hyperparameter $\lambda$ is an important choice when working with the Lasso. Marginal maximum likelihood offers us a data driven approach, while a Bayesian hyperprior fits will with our Bayesian approach and fits effortlessly into the Gibbs sampling scheme.
 
-For selection of the marginal maximum likelihood, the original work cited an estimate for $\lambda$ of 0.237 \vmcomment{I don't understand what ``selection of the marginal maximum likelihood''.}. 
-In my own work I found, as shown in Figure~\ref{lambda}, that after extended sampling, values \vmcomment{values of what?} randomly deviated around a value slightly lower but not significantly different in the context of the greater problem.
+For selection of the hyperparameter via marginal maximum likelihood, the original work cited an estimate for $\lambda$ of 0.237. In my own work I found, as shown in Figure~\ref{lambda}, that after extended sampling, values of consecutive $\lambda^{(k})$ randomly deviated around a value slightly lower but not significantly different in the context of the greater problem (0.2365).
 
 \begin{figure}\label{lambda}
   \centering
@@ -232,10 +233,16 @@ In my own work I found, as shown in Figure~\ref{lambda}, that after extended sam
   \caption{Shown here is the convergence of the marginal maximum likelihood estimate of $\lambda$. The horizontal dashed line represents the estimate used by \cite{park2008bayesian} (.237) while the solid line represent the value found taking the median of the last 900 of 1000 samples (.2365).}
 \end{figure}
 
-The selection \vmcomment{of $\lambda$?} via hyperprior gave similar results, and due to ease of computation was repeated for both the regular Gibbs sampler and the uncorrelated Gibbs sampler. In the original case, the sample of $\lambda$ had a median of \vmadd{0}.279 with a 95\% credible interval from 0.141 to 0.477. With the uncorrelated sampler the median was 0.274 with an interval from 0.141 to 0.483. This also further demonstrates the lack of need for the uncorrelated sampler.
-\vmcomment{This discussion about $\lambda$ needs work; I have hard time figuring out what you are trying to say; sharpen your message.}
+The selection of $\lambda$ via hyperprior gave similar results, and due to ease of computation these results were repeated for both the regular Gibbs sampler and the uncorrelated Gibbs sampler with a larger effective sampling size. In the original case, the posterior estimates of $\lambda$ had a median of 0.279 with a 95\% credible interval from 0.141 to 0.477. With the uncorrelated sampler the median was 0.274 with an interval from 0.141 to 0.483. This also further demonstrates the lack of need for the uncorrelated sampler.
 
 \section{Discussion}
+From a sampling perspective the Bayesian Lasso delivers exactly as promised. Convergence of the Gibbs sampler is well within the bounds of any reasonable burn in period, and seems to have few problems with correlation between estimates in the sample. Running a large number of samplers for different values of $\lambda$ could also be parallelized to produce convergence plots more swiftly.
+
+The Bayesian Lasso fills an important niche in the use of the Lasso. Few techniques are available for assessing the variability of the the Lasso estimators, and can often present their own problems (such as n-fold cross validation). If one is willing to work within a Bayesian framework the sampling scheme here allows for easy production of credible intervals that do well in capturing the true estimates of a standard Lasso estimator. 
+
+Aside from providing a means to estimate variability, the Bayesian Lasso also presents to approaches to finding good values for the hyperparameter $\lambda$, both of which fit into the Gibbs sampling scheme easily. This also provides a more data driven approach to selection of $\lambda$, which can be preferrable to relying on user specification.
+
+The work here also replicated the original work almost perfectly. The largest discrepancy appears to be in the marginal maximum likelihood estimate of $\lambda$, were I suspect that \cite{park2008bayesian} may have had too small of a sample from the EM algorithm, or may just be an artifict of rounding. Regardless of this fact, resampling variability masked any discernible difference between the credible intervals produced using either estimate of $\lambda$.  
 
 \bibliography{stat572}
 

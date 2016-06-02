@@ -304,8 +304,12 @@ makeFig1<-function(y,x,samples=10000,burnin=1000,save=FALSE){
   gsample=GibbsSample(y,x,.237,samples,burnin)
   MMLloc=sum(abs(apply(gsample$betas,2,median)))/max(apply(abs(gbetas),1,sum))
   nfold=cv.glmnet(x,y,nfolds=dim(x)[1])
-  nfoldbetas=nfold$glmnet.fit$beta[nfold$glmnet.fit$lambda==nfold$lambda.min]
-  nfoldloc=sum(abs(nfoldbetas))/max(apply(abs(lbetas),1,sum))
+  nfoldcoefs=Matrix(nfold$glmnet.fit$beta[,which(nfold$lambda==nfold$lambda.min)])[,1]
+
+  #nfoldbetas=nfold$glmnet.fit$beta[nfold$glmnet.fit$lambda==nfold$lambda.min]
+  nfoldloc=sum(abs(nfoldcoefs))/max(apply(abs(lbetas),1,sum))
+
+browser()
 
  #Make three plots
   par(mfrow=c(1,3))
@@ -313,7 +317,7 @@ makeFig1<-function(y,x,samples=10000,burnin=1000,save=FALSE){
   for(j in 1:3){
    #Initialize plot
     if(j==1){
-      plot(c(0.03,.97),c(max(max(lbetas),max(gbetas),max(rbetas)),min(min(lbetas),min(gbetas),min(rbetas))),type='n',ylab="Bayesian Lasso",xlab=expression(abs(abs(hat(beta)))[1]/max(abs(abs(hat(beta)))[1])) )
+      plot(c(0.03,.97),c(max(max(lbetas),max(gbetas),max(rbetas)),min(min(lbetas),min(gbetas),min(rbetas))),type='n',ylab="Estimated Coefficient Value",xlab=expression(abs(abs(hat(beta)))[1]/max(abs(abs(hat(beta)))[1])) )
       legend('topleft',lty=c(1,2,3),legend=c("Bayesian Estimates","Lasso Estimates","Ridge Estimates"))
     } else { 
       plot(c(0.03,.97),c(max(max(lbetas),max(gbetas),max(rbetas)),min(min(lbetas),min(gbetas),min(rbetas))),type='n',ylab='',xlab=expression(abs(abs(hat(beta)))[1]/max(abs(abs(hat(beta)))[1])) )
@@ -401,10 +405,10 @@ genLogPosterior<-function(b){
   return(logpost)
 }
 
-makeFig2(y.diab,x.diab)
+#makeFig2(y.diab,x.diab)
 
-test=GibbsSample(y.diab,x.diab,lambda=.237,samples=10000,burnin=1000)
-test2=GibbsSampleBadStart(y.diab,x.diab,lambda=.237,samples=10000,burnin=1000)
+#test=GibbsSample(y.diab,x.diab,lambda=.237,samples=10000,burnin=1000)
+#test2=GibbsSampleBadStart(y.diab,x.diab,lambda=.237,samples=10000,burnin=1000)
 
 #testh=hyperpriorGibbsSample(y.diab,x.diab,samples=10000,burnin=1000)
 
@@ -412,7 +416,7 @@ test2=GibbsSampleBadStart(y.diab,x.diab,lambda=.237,samples=10000,burnin=1000)
 #printEffectiveSizes(y.diab,x.diab)
 #beta5ACFPlot(y.diab,x.diab)
 #lambdaConvergencePlot(y.diab,x.diab,kmax=1000,samples=10000,burnin=1000,save=TRUE)
-#makeFig1(y.diab,x.diab,samples=10000,burnin=1000,save=TRUE)
+makeFig1(y.diab,x.diab,samples=10000,burnin=1000,save=TRUE)
 #makeFig2(y.diab,x.diab,lambda=0.237,samples=10000,burnin=1000,save=TRUE)
 
 #RUN ALL THESE THEN SET TO SUBSAMPLE
