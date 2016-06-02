@@ -14,6 +14,12 @@
 
 \bibliographystyle{plainnat}
 
+\usepackage{color}
+\usepackage{ulem}
+\newcommand{\vmdel}[1]{\sout{#1}}
+\newcommand{\vmadd}[1]{\textbf{\color{red}{#1}}}
+\newcommand{\vmcomment}[1]{({\color{blue}{VM's comment:}} \textbf{\color{blue}{#1}})}
+
 \begin{document}
 %%\maketitle
 
@@ -124,6 +130,7 @@ One point that has yet to be addressed is the selection of the hyperparameter $\
 \] which is then updated after a run of the Gibbs sampler according to \[ 
 \lambda^{(k)}=\sqrt\frac{2p}{\Sigma^p_{j=1}E_\lambda[\tau^2_j|\mathbf{y}]}
 \] by replacing the expectation with an average from the Gibbs sample. 
+\vmcomment{Not clear why this is an EM Algorithm.}
 
 \section{Results}
 Assessing a penalized regression can be difficult, and with real world problems no underlying truth is known to compare selected models against. In the context of the Bayesian Lasso, we are most concerned with comparing this approach with the standard Lasso. As will also prove relevant, we also compare this approach with Bridge Regression. 
@@ -133,14 +140,17 @@ Estimate paths are an informative tool with any penalized regression, looking at
 THIS NEEDS WORK!
 
 \subsection{Data Set}
-The algorithm found herein has been tested on the same data used by \cite{efron2004least}. This data comprises $n=442$ diabetes patients observed over a one year period. The regression variables comprise of patient age, sex, body mass index, average blood pressure, and six blood serum measurements such as good and bad cholesterol. These were then looked at as linear predictors of the response, a quantitative measure of diabetes progression at the end of the one year observation period.
+The algorithm found herein has been tested on the same data used by \cite{efron2004least}. This data comprises $n=442$ diabetes patients observed over a one year period. 
+The regression variables \vmdel{comprise of} \vmadd{are} patient age, sex, body mass index, average blood pressure, and six blood serum measurements\vmadd{,} such as ``good'' and bad ``cholesterol''. 
+These were then looked at as linear predictors of the response, a quantitative measure of diabetes progression at the end of the one year observation period.
 
 It is worth noting here that the specifics of the data set are not of interest. The discussion here is only focused on the effectiveness of the algorithm and we avoid making any quality judgments of the efficacy of our models in the context of the original data.
 
 \subsection{Assessing the Gibbs Sampler}
 When working with any MCMC approach it is important to step back and consider the effectiveness of the sampling technique. One thing that concerned me early on was the use of successive Gibbs samples, with no comments on the efficacy of such an approach.
 
-To this end, results were assessed using the CODA package by \cite{codapackage}, which can be used the find diagnostics of an MCMC approach. More specifically, the effective sample sizes were of particular interest.
+To this end, results were assessed using the CODA package by \cite{codapackage}, which can be used \vmdel{the find} \vmadd{to} diagnos\vmadd{e}\vmdel{tics} of an MCMC approach. More specifically, the effective sample sizes\vmadd{, which reflect mixing of the chain,} were of particular interest. 
+\vmcomment{Comment on MCMC convergence too.}
 
 Following the approach used in the original work, samples of size 10,000 were taken from the Gibbs sampler, after a burn in period of 1,000 samples. After repeated resamplings it was found that the fifth covariate, blood serum triglyceride levels, had an effective sample size approximately 40\%-60\% the size of the sample. The cause for this became readily apparent when looking to Figure~\ref{Var5} which shows a significant correlation at low lags. While other variables also displayed some similar issues, triglyceride levels presented the most extreme and consistent case.
 
@@ -153,6 +163,7 @@ Following the approach used in the original work, samples of size 10,000 were ta
 To alleviate this issue a sub-sample of Gibbs samples were taken, wherein the sampling was repeated $5 \times 10,000$ times and only every fifth sample was kept. This produced a sample that was of size $n=10,000$, and when reassessing the sample size and autocorrelation all previous issues had vanished.
 
 While having an uncorrelated Gibbs sample is preferred, the results found after adjusting the sampler did not differ in any meaningful way. In the end it would be more suitable to just take a larger sample size rather than a sub-sample to save the information gained for the less correlated variables.
+\vmcomment{Also, auto-correlation is not the enemy, really. Only if the ESSs are ridiculously small, which is a problem for constructing credible intervals.}
 
 \subsection{Convergence Paths}
 When working with penalized regression of any sort, it is important to consider the entire path of estimates as the penalties vary. Figure~\ref{convergence} shows exactly that, allowing us to compare the Bayesian Lasso, Lasso, and Ridge Regression. 
@@ -164,13 +175,14 @@ ALSO THE STUPID DASHED LINE MAKES NO SENSE, IT TORMENTS ME (Seriously though, it
 \begin{figure}\label{convergence}
   \centering
     \includegraphics[width=0.7\textwidth]{SaveFigure1.pdf}
-  \caption{Shown here are the convergence paths for the Bayesian Lasso, Lasso, and Ridge Regression. The horizontal lines represent values selected via Marginal Maximum Likelihood for the Bayesian Lasso and n-fold cross-validation in the case of the Lasso estimates. Variables have been separated into three plots for visibility, while allowing easier comparison of the three selection schemes.}
+  \caption{Shown here are the convergence paths for the Bayesian Lasso, Lasso, and Ridge Regression. The horizontal lines represent values selected via Marginal Maximum Likelihood for the Bayesian Lasso and n-fold cross-validation in the case of the Lasso estimates. Variables have been separated into three plots for visibility, while allowing easier comparison of the three selection schemes.  \vmcomment{Make all fonts bigger and make sure everything is readable. Also, axis labels do not make sense to me.}}
 \end{figure}
 
 \subsection{Credible Intervals}
 While convergence is important, it is only looking at point estimates which were not the intent of the Bayesian Lasso. To get a more clear picture we turn to the parameter credible intervals. 
 
-Figure~\ref{CIs} shows exactly that, with equal-tailed 95\% credible intervals on each of the parameters. As with the original paper, these were checked with $\lambda$ set via marginal maximum likelihood and hyperprior. In each case the results were indistinguishable from one another, and indistinguishable from the original results.
+Figure~\ref{CIs} shows exactly that, with equal-tailed 95\% credible intervals on each of the parameters. As with the original paper, these were checked with $\lambda$ set via marginal maximum likelihood and hyperprior \vmcomment{Specify the hyperprior.}. 
+In each case the results were indistinguishable from one another, and indistinguishable from the original results.
 
 The first point that is important to note is that the n-fold ($\bigtriangleup$) and matched $L_1$ norm estimates ($\bigtriangledown$) both fall well within the credible intervals. Also the $L_1$ norm matched estimates (very akin to selecting for the same $\lambda$ value) are almost identical to the Bayesian Lasso estimates. 
 
@@ -183,7 +195,8 @@ The first point that is important to note is that the n-fold ($\bigtriangleup$) 
 \subsection{Hyperparameter Selection}
 Selection of the hyperparameter $\lambda$ is an important choice when working with the Lasso. Marginal maximum likelihood offers us a data driven approach, while a Bayesian hyperprior fits will with our Bayesian approach and fits effortlessly into the Gibbs sampling scheme.
 
-For selection of the marginal maximum likelihood, the original work cited an estimate for $\lambda$ of 0.237. In my own work I found, as shown in Figure~\ref{lambda}, that after extended sampling, values randomly deviated around a value slightly lower but not significantly different in the context of the greater problem.
+For selection of the marginal maximum likelihood, the original work cited an estimate for $\lambda$ of 0.237 \vmcomment{I don't understand what ``selection of the marginal maximum likelihood''.}. 
+In my own work I found, as shown in Figure~\ref{lambda}, that after extended sampling, values \vmcomment{values of what?} randomly deviated around a value slightly lower but not significantly different in the context of the greater problem.
 
 \begin{figure}\label{lambda}
   \centering
@@ -191,7 +204,8 @@ For selection of the marginal maximum likelihood, the original work cited an est
   \caption{Shown here is the convergence of the marginal maximum likelihood estimate of $\lambda$. The horizontal line represents the estimate used by \cite{park2008bayesian} (.237) while the value found taking the last 900 of 1000 samples was .2365, not significantly different.}
 \end{figure}
 
-The selection via hyperprior gave similar results, and due to ease of computation was repeated for both the regular Gibbs sampler and the uncorrelated Gibbs sampler. In the original case, the sample of $\lambda$ had a median of .279 with a 95\% credible interval from 0.141 to 0.477. With the uncorrelated sampler the median was 0.274 with an interval from 0.141 to 0.483. This also further demonstrates the lack of need for the uncorrelated sampler.
+The selection \vmcomment{of $\lambda$?} via hyperprior gave similar results, and due to ease of computation was repeated for both the regular Gibbs sampler and the uncorrelated Gibbs sampler. In the original case, the sample of $\lambda$ had a median of \vmadd{0}.279 with a 95\% credible interval from 0.141 to 0.477. With the uncorrelated sampler the median was 0.274 with an interval from 0.141 to 0.483. This also further demonstrates the lack of need for the uncorrelated sampler.
+\vmcomment{This discussion about $\lambda$ needs work; I have hard time figuring out what you are trying to say; sharpen your message.}
 
 \section{Discussion}
 
