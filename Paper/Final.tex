@@ -13,6 +13,12 @@
 
 \bibliographystyle{plainnat}
 
+\usepackage{color}
+\usepackage{ulem}
+\newcommand{\vmdel}[1]{\sout{#1}}
+\newcommand{\vmadd}[1]{\textbf{\color{red}{#1}}}
+\newcommand{\vmcomment}[1]{({\color{blue}{VM's comment:}} \textbf{\color{blue}{#1}})}
+
 \begin{document}
 %%\maketitle
 
@@ -24,7 +30,7 @@
 \end{center}
 
 \begin{abstract}
-  The Bayesian Lasso, building on the interpretation of Tibshirani, places Laplace priors on linear regression coefficients to allow for Bayesian approaches to parameter and error estimation. Taking advantage of a scale mixture of normals re-expression for the Laplacian distribution allows for easy sampling from full conditionals which in turn culminate in a simple Gibbs sampler to produce credible intervals on estimated coefficients.
+  The Bayesian Lasso, building on the interpretation of Tibshirani, places Laplace priors on linear regression coefficients to allow for Bayesian approaches to parameter and error estimation. Taking advantage of a scale mixture of normals re-expression for the Laplacian distribution allows for easy sampling from full conditionals which in turn culminate in a simple Gibbs sampler to produce credible intervals \vmdel{on estimated} \vmadd{for regression} coefficients.
 \end{abstract}
 
 \section{Introduction}\label{Introduction}
@@ -34,9 +40,9 @@ OLS regression is fairly well understood, allowing for estimates of regression c
 
 Another problem that is becoming increasingly common with the prevalence of large data sets, a researcher may not know which of the $\mathbf{x}$ variables are truly related to $\mathbf{y}$, and may have $p$ explanatory variables when only $p'<p$ of them drive the relationship in $\mathbf{y}$. While the relationship between some regressors and $\mathbf{y}$ should be null, \cite{seeger2008bayesian} shows us that OLS will tend to fit all regression coefficients with at least non-zero value, as this will usually produce minor decreases in the squared error.
 
-This takes the problem of finding the best regression coefficients, and introduces a second problem of model selection. For small problems, a total of $2^p$ possible models exist and may be full explored and evaluated according to some information criterion such as AIC or BIC. For a problem like assessing DNA microarray data, where thousands or tens of thousands of data points are collected for tens or hundreds of people, individually assessing models becomes impossible.
+This takes the problem of finding the best regression coefficients, and introduces a second problem of model selection. For small problems, a total of $2^p$ possible models exist and may be full explored and evaluated according to some information criterion such as AIC or BIC. For a problem like assessing DNA microarray data \vmcomment{Not sure what ``assessing ... data'' means; also, you refer to microarray data as if everyone should be familiar with it.}, where thousands or tens of thousands of data points are collected for tens or hundreds of people, individually assessing models becomes impossible.
 
-Gene expression data is a great example of the problem the Lasso seeks to solve. Many of the variables in $\mathbf{x}$ are not related to the response. This introduces the need for two similar ideas, selection and shrinkage. A method is required that will either select which estimates will be non-zero, or an alternative view is that it needs to shrink estimates to zero (as a means of selecting non-zero estimates). 
+Gene expression data is a great example of the problem the Lasso seeks to solve. Many of the variables in $\mathbf{x}$ are not related to the response \vmcomment{Give an example of a response.}. This introduces the need for two similar ideas, selection and shrinkage. A method is required that will either select which estimates will be non-zero, or an alternative view is that it needs to shrink estimates to zero (as a means of selecting non-zero estimates). 
 
 In the case of the gene expression data, \cite{ishwaran2005spike} chose a Bayesian approach akin to a constrained optimization problem known as spike and slab priors. This approach places a prior distribution on the estimates of interest that places a mixture of a flat, uniform distribution (the slab) with a degenerate distribution at zero (the spike). This formulation encourages estimates to have higher probability at 0, and produces low variances for estimates that are more likely to be zero, as explained by \cite{ishwaran2005spike2}. Sadly, this last property (driving variability to 0 for estimates near 0) makes this approach less ideal when interested in assessing the individual parameters rather than the model in its entirety.
 
@@ -50,7 +56,7 @@ The Bayesian Lasso builds on the idea originally proposed by \cite{tibshirani199
 
 \section{Background and Methods}
 Linear regression assumes that we have some vector of responses, $\boldsymbol{y}$, which depend linearly on some covariates, $\boldsymbol{X}$. Formally, accounting for an error term, we wish to fit the model \[
-\boldsymbol{y} = \mu \boldsymbol{1}_n + \boldsymbol{X}\boldsymbol{\beta}+\boldsymbol{\epsilon}
+\boldsymbol{y} = \mu \boldsymbol{1}_n + \boldsymbol{X}\boldsymbol{\beta}+\boldsymbol{\epsilon}\vmadd{,}
 \] where $\boldsymbol{y}$ is an $n \times 1$ vector, $\mu$ is the mean of $\boldsymbol{y}$, $\boldsymbol{X}$ is a matrix of regressors (typically standardized), and $\boldsymbol{\epsilon}$ is a vector of independent and identically distributed zero mean normal variables with an unknown variance. For the sake of this discussion we will assume that the $\boldsymbol{y}$ has zero mean ($\mu=0$), noting that in practice this can be easily achieved by subtracting the sample mean estimate from $\mathbf{y}$.
 
 What is of interest are the regression coefficients, $\boldsymbol{\beta}$. These can be used for prediction when new values of regressors are given, or they may be of interest for their interpretation on the effects of certain regressors on the dependent variable $\boldsymbol{y}$. Irrespective of the use, there are a number of approaches to finding the regression coefficients. One familiar method, ordinary least squares, seeks to minimize least squares error\[
@@ -94,8 +100,9 @@ In keeping with our normal errors being independent and identically distributed 
 \mathbf{y}|\mu,\mathbf{X},\boldsymbol\beta,\sigma^2 \sim \text{N}_n(\mu \mathbf{1}_n+\mathbf{X}\boldsymbol\beta,\sigma^2\mathbf{I}_n), \] but again noting that the vector $\mathbf{y}$ should be centered, resulting in $\mu=0$. Alternatively, an independent flat prior on $\mu$ can be used without affecting conjugacy of relevant variables.
 
 The regression parameters $\boldsymbol\beta$, conditioned on their variance estimates $\tau_1^2,...,\tau_p^2$, are given a normal prior, \[ 
-\boldsymbol\beta|\sigma^2,\tau^2_1,...,\tau^2_p\sim\text{N}_p(\mathbf{0}_p,\sigma^2\mathbf{D}_\tau),\] with \[ \mathbf{D}_\tau=\text{diag}(\tau_1^2,...,\tau^2_p) \] which is not the double exponential prior intended. To arrive at the desired Laplace distribution, the representation found in \cite{andrews1974scale} allows us to express the Laplace distribution as a scale mixture of normal distributions, \[ \frac{a}{2}e^{-a|z|}=\int^\infty_0
-\frac{1}{\sqrt{2\pi s}}e^{-z^2/(2s)}\frac{a^2}{2}e^{-a^2s/2}ds.\] If we define the priors of $\tau^2$ to be of the form, \[ \tau^2_j \sim \frac{\lambda^2}{2}e^{-\lambda^2\tau^2_j/2}d\tau^2_j\] then we can then integrate out $\tau^2_1,...,\tau^2_p$ to arrive at the desired distribution, \[ \pi(\boldsymbol\beta|\sigma^2)=\prod^p_{j=1}\frac{\lambda}{2\sqrt{\sigma^2}}e^{-\lambda|\beta_j|/\sqrt{\sigma^2}}, \] which is a Laplace prior. 
+\boldsymbol\beta|\sigma^2,\tau^2_1,...,\tau^2_p\sim\text{N}_p(\mathbf{0}_p,\sigma^2\mathbf{D}_\tau),\] with \[ \mathbf{D}_\tau=\text{diag}(\tau_1^2,...,\tau^2_p)\vmadd{,} \] 
+which is not the double exponential prior intended. To arrive at the desired Laplace distribution, the representation found in \citep{andrews1974scale} allows us to express the Laplace distribution as a scale mixture of normal distributions, \[ \frac{a}{2}e^{-a|z|}=\int^\infty_0
+\frac{1}{\sqrt{2\pi s}}e^{-z^2/(2s)}\frac{a^2}{2}e^{-a^2s/2}ds.\] If we define the priors of $\tau^2$ to be of the form\vmdel{,} \[ \tau^2_j \sim \frac{\lambda^2}{2}e^{-\lambda^2\tau^2_j/2}d\tau^2_j\vmadd{,}\] then we can then integrate out $\tau^2_1,...,\tau^2_p$ to arrive at the desired distribution, \[ \pi(\boldsymbol\beta|\sigma^2)=\prod^p_{j=1}\frac{\lambda}{2\sqrt{\sigma^2}}e^{-\lambda|\beta_j|/\sqrt{\sigma^2}}, \] which is a Laplace prior. 
 
 To illustrate this fact, consider the distribution of a single $\beta_i$ and it's variance $\tau_i^2$. We have, \[
 \beta_i|\sigma^2,\tau_i^2 \sim \frac{1}{\sqrt{2\pi\sigma^2}}\exp{\left( -\frac{\beta_i^2}{2\tau_i^2\sigma^2}\right)}\frac{\lambda^2}{2}\exp{\left( -\frac{\lambda^2\tau_i^2}{2}\right)} 
@@ -113,18 +120,18 @@ Again it is worth noting that conditioning $\boldsymbol\beta$ on $\sigma^2$ prod
 \end{align*}
 and we can see that taking the logarithm and maximizing (over $\lambda$) gives us exactly the formulation of the Lasso, as $\sigma^2$ doesn't figure into the maximum (over $\lambda$). If we instead express the $\boldsymbol\beta$ as being independent of $\sigma^2$ we end up with \[
 \pi(\mathbf{y},\boldsymbol\beta|\mathbf{X},\sigma^2) \propto \exp{\left(\frac{||\mathbf{y}-\mathbf{X}\boldsymbol\beta||_2}{\sigma^2}+\lambda ||\boldsymbol\beta||_1\right)}.
-\] This then produces different results where $\sigma^2$ and $\lambda$ can each produce a unique maximum, which lead to bimodality as was shown in the toy example presented by \cite{park2008bayesian}.
+\] This then produces different results where $\sigma^2$ and $\lambda$ can each produce a unique maximum \vmcomment{When you maximize over what? Sorry, I am still not getting it.}, which lead to bimodality as was shown in the toy example presented by \cite{park2008bayesian}.
 
 \subsection{Full Conditionals}
-With our priors properly defined, we are then able to sample consecutively from the full conditional distributions of $\boldsymbol\beta$, $\sigma^2$, and $\tau^2_1,...,\tau^2_p$. First defining the matrix $\mathbf{A}=\mathbf{X}^T\mathbf{X}+\mathbf{D}_\tau^{-1}$ for simplification.
+With our priors properly defined, we are then able to sample consecutively from the full conditional distributions of $\boldsymbol\beta$, $\sigma^2$, and $\tau^2_1,...,\tau^2_p$. First\vmadd{,} defin\vmadd{e}\vmdel{ing} the matrix $\mathbf{A}=\mathbf{X}^T\mathbf{X}+\mathbf{D}_\tau^{-1}$ for simplification.
 
-In deriving full conditional on $\boldsymbol\beta$ we concern ourselves only with the priors on $\mathbf{y}$ and $\boldsymbol\beta$ to produce a joint distribution that follows,\begin{align*}
+In deriving \vmadd{the} full conditional \vmdel{on} \vmadd{for} $\boldsymbol\beta$ we concern ourselves only with the priors on $\mathbf{y}$ \vmcomment{$\mathbf{y}$ has no prior, you are probably talking about the likelihood} and $\boldsymbol\beta$ to produce a joint distribution that follows,\begin{align*}
 \boldsymbol\beta,\mathbf{y}|\mathbf{X},\sigma^2,\boldsymbol\tau^2 &\propto \exp{\left(-\frac{\boldsymbol\beta^T\mathbf{D}_{\boldsymbol\tau}^{-1}\boldsymbol\beta}{2\sigma^2}-\frac{(\mathbf{y}-\boldsymbol\beta\mathbf{X})^T(\mathbf{y}-\mathbf{X}\boldsymbol\beta)}{2\sigma^2}\right)}\\
-&\propto \exp{\left(-\frac{\boldsymbol\beta^T((\mathbf{X}^T\mathbf{X}+\mathbf{D}_{\boldsymbol\tau}^{-1})/\sigma^2)\boldsymbol\beta+\mathbf{y}^T\mathbf{y}-\mathbf{y}^T\mathbf{X}\boldsymbol\beta+\boldsymbol\beta^T\mathbf{X}^T\mathbf{y}}{2}\right)}
+&\propto \exp{\left(-\frac{\boldsymbol\beta^T((\mathbf{X}^T\mathbf{X}+\mathbf{D}_{\boldsymbol\tau}^{-1})/\sigma^2)\boldsymbol\beta+\mathbf{y}^T\mathbf{y}-\mathbf{y}^T\mathbf{X}\boldsymbol\beta+\boldsymbol\beta^T\mathbf{X}^T\mathbf{y}}{2}\right)}\vmadd{.}
 \end{align*}
 Inserting some identity matricies of the form $\mathbf{A}^{-1}\mathbf{A}$ leads us to the form
 \begin{align*}
-&\propto \exp{\left(-\frac{(\boldsymbol\beta-\mathbf{A}^{-1}\mathbf{X}^T\mathbf{y})^T\mathbf{A}(\boldsymbol\beta-\mathbf{A}^{-1}\mathbf{X}^T\mathbf{y})}{\sigma^22}\right)}
+&\propto \exp{\left(-\frac{(\boldsymbol\beta-\mathbf{A}^{-1}\mathbf{X}^T\mathbf{y})^T\mathbf{A}(\boldsymbol\beta-\mathbf{A}^{-1}\mathbf{X}^T\mathbf{y})}{\sigma^22}\right)}\vmadd{,}
 \end{align*}
 which gives us a normal of the form
 \[
@@ -152,16 +159,16 @@ One point that has yet to be addressed is the selection of the hyperparameter $\
 The MML approach to hyperparameter selection treats the problem with an EM algorithm approach where the value of $\lambda$ is considered to be our missing value. This is easy to see when looking at the complete log-likelihood, which after dropping some constants independent of $\lambda$ has the form \[
 -\frac{1}{\sigma^2}(||\mathbf{y}-\mathbf{X}\boldsymbol\beta||^2_2)-\frac{1}{2}\sum^p_{j=1}\text{ln}(\tau_j^2)-\frac{1}{2}\sum^p_{j=1}\frac{\beta^2_j}/\sigma^2\tau^2+p\text{ln}(\lambda^2)-\frac{\lambda^2}{2}\sum^p_{j=1}\tau^2_j.
 \] Taking the expectation and further removing terms that don't depend on $\lambda$ (denoted as a constant $C$), we find that \[
-Q(\lambda^{(k)}|\lambda^{(k-1)})=p\text{ln}(\lambda^2)-\frac{\lambda^2}{2}\sum^p_{j=1}E_{\lambda^{(k-1)}}[\tau^2_j|\mathbf{y}]+C
+Q(\lambda^{(k)}|\lambda^{(k-1)})=p\text{ln}(\lambda^2)-\frac{\lambda^2}{2}\sum^p_{j=1}E_{\lambda^{(k-1)}}[\tau^2_j|\mathbf{y}]+C\vmadd{,}
 \] which we can easily maximize by taking a derivative and finding the value of $\lambda$ that maximizes $Q(\lambda^{(k)}|\lambda^{(k-1)})$ and we arrive at 
 \[
-\lambda^{(k)}=\pm\sqrt{\frac{2p}{\Sigma^p_{j=1}E_{\lambda^{(k-1)}}[\tau^2_j|\mathbf{y}]}}
+\lambda^{(k)}=\pm\sqrt{\frac{2p}{\Sigma^p_{j=1}E_{\lambda^{(k-1)}}[\tau^2_j|\mathbf{y}]}}\vmadd{,}
 \] which must of course be positive, yielding our maximization step in the algorithm. This procedure also holds true when $\sigma^2$ is given a gamma prior, with a few more $\lambda$ independent components in the complete log-likelihood. \cite{park2008bayesian} demonstrated that this holds for $\sigma^2$ being given a gamma prior as well.
 
 \subsection{Hyperprior on $\lambda$}
 As an alternative to finding a point estimate for $\lambda$, in keeping with our otherwise Bayesian approach we may also put a hyperprior on $\lambda$. More accurately, in the interest of maintaining conjugacy, a gamma prior is actually placed on $\lambda^2$, with the form\[
-\pi(\lambda^2)=\frac{\delta^r}{\Gamma(r)}(\lambda^2)^{r-1}e^{-\delta\lambda^2}
-\] where $\lambda^2$, $r$, and $\delta$ are all strictly positive. This produces a full conditional distribution for $\lambda^2$ that is also gamma, with shape $p+r$ and rate $\Sigma^p_{j=1}\tau^2_j/2+\delta$. In the original implementation the choice of $r$ and $\delta$ were $r=1$ and $\delta=1.78$ (the same values used in my own analysis) which actually gives an exponential prior on $\lambda^2$ with rate $\delta$ and a mean approximately 10 times the maximum likelihood estimate.
+\pi(\lambda^2)=\frac{\delta^r}{\Gamma(r)}(\lambda^2)^{r-1}e^{-\delta\lambda^2}\vmadd{,}
+\] where $\lambda^2$, $r$, and $\delta$ are all strictly positive. This produces a full conditional distribution for $\lambda^2$ that is also gamma, with shape $p+r$ and rate $\Sigma^p_{j=1}\tau^2_j/2+\delta$. In the original implementation the choice of $r$ and $\delta$ were $r=1$ and $\delta=1.78$ (the same values used in my own analysis)\vmadd{,} which actually gives an exponential prior on $\lambda^2$ with rate $\delta$ and a mean approximately 10 times the maximum likelihood estimate.
 
 \section{Results}
 Any use of an MCMC approach to problem solving must first ensure that the MCMC procedure is producing appropriate results. We will see here that the Gibbs sampler of the Bayesian Lasso has obvious convergence, and has few issues with correlation between samples.
